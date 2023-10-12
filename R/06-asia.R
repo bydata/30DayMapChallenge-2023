@@ -10,10 +10,6 @@ asia <- giscoR::gisco_get_countries(
 
 glimpse(asia)
 
-asia %>%
-  ggplot() +
-  geom_sf()
-
 
 #' Population data from {gt} package
 #' Source: Worldbank
@@ -29,22 +25,16 @@ asia_pop <- asia %>%
 nrow(asia_pop) == nrow(asia)
 st_crs(asia_pop)
 
+# Create polygons for Dorling cartogram
 asia_dorling <- cartogram_dorling(asia_pop, weight = "population", k = 15)
 
 p <- asia_dorling %>%
-  # st_transform(crs = "EPSG:4326") %>%
   ggplot() +
-  geom_sf(fill = "steelblue", col = "white") +
-  geom_sf_text(
-    aes(label = FID, size = population),
-    col = "white", family = "Source Sans Pro SemiBold"
-  ) +
-  theme_void() +
-  theme(
-    plot.background = element_rect(color = "grey98", fill = "grey98")
-  )
+  geom_sf()
 
-layer_data(p, 1) %>%
+# Extract layer data to calculate the centroid and the area of the flags
+p %>%
+  layer_data(1) %>%
   bind_cols(FID = tolower(asia_dorling$FID)) %>%
   mutate(
     area = as.numeric(st_area(geometry)),
@@ -54,12 +44,10 @@ layer_data(p, 1) %>%
   ) %>%
   arrange(-area) %>%
   mutate(FID2 = fct_inorder(FID)) %>%
-    # View()
   ggplot(aes(x, y, size = area)) +
   ggflags::geom_flag(
     aes(country = FID)
   ) +
-  # geom_text(aes(label = FID), size = 2) +
   scale_size_area(max_size = 60) +
   coord_cartesian(clip = "off") +
   guides(size = "none") +
