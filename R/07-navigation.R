@@ -1,0 +1,282 @@
+library(tidyverse)
+library(sf)
+library(here)
+library(ggtext)
+library(patchwork)
+
+df <- read_csv(here("data", "query-wikidata-stadiums.csv"))
+
+bundesliga_clubs <- c(
+  "Borussia Dortmund",
+  "FC Bayern Munich",
+  "VfB Stuttgart",
+  "SC Freiburg",
+  "SV Werder Bremen",
+  "Bayer 04 Leverkusen",
+  "FC Augsburg",
+  "1. FC Köln",
+  "Borussia Mönchengladbach",
+  "TSG 1899 Hoffenheim",
+  "RB Leipzig",
+  "1. FC Union Berlin",
+  "VfL Wolfsburg",
+  "1. FSV Mainz 05",
+  "VfL Bochum",
+  "Eintracht Frankfurt",
+  "1. FC Heidenheim",
+  "SV Darmstadt 98"
+)
+
+bundesliga_clubs_shortname <- c(
+  "Dortmund",
+  "Munich",
+  "Stuttgart",
+  "Freiburg",
+  "Bremen",
+  "Leverkusen",
+  "Augsburg",
+  "Köln",
+  "M'gladbach",
+  "Hoffenheim",
+  "Leipzig",
+  "Berlin",
+  "Wolfsburg",
+  "Mainz",
+  "Bochum",
+  "Frankfurt",
+  "Heidenheim",
+  "Darmstadt"
+)
+names(bundesliga_clubs_shortname) <- bundesliga_clubs
+
+df_buli <- subset(df, clubLabel %in% bundesliga_clubs) %>%
+  group_by(clubLabel) %>%
+  slice_head(n = 1) %>%
+  ungroup() %>%
+  st_as_sf(wkt = "coordinates", crs = "EPSG:4326") %>%
+  st_transform(crs = "EPSG:4839")
+
+# Load club icons (downloaded manually)
+icons_folder <- here("input", "team_icons_2023-24")
+icons_files <- list.files(icons_folder, pattern = ".png")
+icons_tags <- glue::glue("<img src='{here(icons_folder, icons_files)}' height=15>")
+names(icons_tags) <- bundesliga_clubs[order(bundesliga_clubs)]
+
+
+## GEOMETRIES ==================================================================
+## Shapefile Germany
+de <- rnaturalearth::ne_countries(scale = 50, country = "Germany", returnclass = "sf")
+de <- st_transform(de, crs = "EPSG:4839")
+
+
+# Calculate the distances (meters) between the stadiums
+df_club_only <- df_buli %>%
+  st_drop_geometry() %>%
+  select(club)
+
+df_distances <- df_club_only %>%
+  cross_join(df_buli, suffix = c("", ".y")) %>%
+  filter(club != club.y) %>%
+  inner_join(df_buli, by = "club") %>%
+  select(-c(club.y, venue.x, venue.y)) %>%
+  rowwise() %>%
+  mutate(
+    distance_oneway = as.numeric(st_distance(coordinates.x, coordinates.y)),
+    distance_return = 2 * distance_oneway) %>%
+  ungroup()
+str(df_distances)
+
+# Calculate the distances each club has to travel in a season
+df_distances_season <- df_distances %>%
+  group_by(clubLabel = clubLabel.x) %>%
+  summarize(
+    total_distance_oneway = sum(distance_oneway),
+    total_distance_return = sum(distance_return)
+    )
+
+# Who has to travel the longest distance?
+df_distances_season %>%
+  arrange(-total_distance_return)
+
+club_longest_dist <- df_distances_season$clubLabel[which.max(df_distances_season$total_distance_return)]
+club_shortest_dist <- df_distances_season$clubLabel[which.min(df_distances_season$total_distance_return)]
+club_longest_dist
+club_shortest_dist
+
+
+df_plot <- df_distances %>%
+  filter(clubLabel.x %in% c(club_longest_dist, club_shortest_dist)) %>%
+  inner_join(df_distances_season, by = join_by(clubLabel.x == clubLabel)) %>%
+  inner_join(
+    data.frame(
+      clubLabel = names(icons_tags),
+      icon_tag = icons_tags
+    ),
+    by = join_by(clubLabel.x == clubLabel)
+  ) %>%
+  mutate(
+    facet_label = sprintf(
+        paste0(
+          ifelse(
+            clubLabel.x == club_longest_dist,
+            "The longest distance:", "The shortest distance:"),
+        "<br><b style='font-size:15pt'>%s</b><br>",
+        "<i>(%5.1f km)</i>"
+        ),
+    clubLabel.x, total_distance_return / 1000),
+    coordinates.x_lon = st_coordinates(coordinates.x)[, "X"],
+    coordinates.x_lat = st_coordinates(coordinates.x)[, "Y"],
+    coordinates.y_lon = st_coordinates(coordinates.y)[, "X"],
+    coordinates.y_lat = st_coordinates(coordinates.y)[, "Y"]
+         )
+
+
+bg_color <- "grey12"
+bg_color <- "#0A153B"
+
+p4 <- df_plot %>%
+  ggplot() +
+  # Map of Germany
+  geom_sf(
+    data = de,
+    aes(geometry = geometry),
+    fill = colorspace::lighten(bg_color, 0.5)
+  ) +
+  geom_curve(
+    aes(
+      x = coordinates.x_lon, xend = coordinates.y_lon,
+      y = coordinates.x_lat, yend = coordinates.y_lat),
+    curvature = 0.05, linewidth = 0.2, color = "grey96",
+    arrow = arrow(angle = 15, type = "closed", length = unit(1.5, "mm"))
+  ) +
+  geom_sf(aes(geometry = coordinates.y),
+          shape = 21, color = "grey96") +
+  # add club icons
+  geom_richtext(
+    data = ~distinct(., clubLabel.x, icon_tag, coordinates.x_lon, coordinates.x_lat),
+    aes(coordinates.x_lon, coordinates.x_lat, label = icon_tag),
+    label.size = 0, fill = NA
+  ) +
+  # Create to facets based on clubLabel, show the facet_label value instead of
+  # clubLabel using a custom labeller function
+  facet_wrap(vars(clubLabel.x), labeller = as_labeller(
+    function(x) {
+      unique(df_plot$facet_label[df_plot$clubLabel.x == x])
+    }
+  )) +
+  labs(
+    title = "",
+    subtitle = "Distances for outward and return journey, measured in a straight
+    line (Euclidean distance)"
+  ) +
+  theme_void(base_family = "Source Sans Pro") +
+  theme(
+    plot.background = element_rect(color = bg_color, fill = bg_color),
+    text = element_text(color = "grey90"),
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5),
+    strip.text = element_markdown(family = "Source Sans Pro", lineheight = 1.25,
+                                  size = 13)
+  )
+p4
+ggsave(here("plots", "07-navigation.png"), width = 7, height = 6)
+
+
+# Chart theme for the bar charts
+theme_custom <- function() {
+  theme_minimal(base_family = "Source Sans Pro") +
+  theme(
+    plot.background = element_rect(color = bg_color, fill = bg_color),
+    text = element_text(color = "grey90"),
+    plot.title = element_markdown(hjust = 0.5, lineheight = 1, size = 13),
+    axis.text.x.top = element_text(color = "grey90"),
+    axis.text.y = element_blank(),
+    axis.ticks.x.top = element_line(color = "grey90", size = 0.2),
+    axis.ticks.length = unit(1.5, "mm"),
+    axis.title = element_blank(),
+    panel.grid = element_blank()
+  )
+}
+
+bar_color <- "#74A4BC"
+# bar_color <- "#4A6C6F"
+# bar_color <- "#2EC4B6"
+
+# Distances (return) travelled per club
+p1 <- df_distances_season %>%
+  mutate(clubLabel = fct_reorder(clubLabel, total_distance_return)) %>%
+  ggplot(aes(clubLabel, total_distance_return / 1000)) +
+  geom_col(fill = bar_color) + #2EC4B6
+  geom_text(
+    aes(y = 200, label = clubLabel),
+    hjust = 0, vjust = 0.5, family = "Source Sans Pro", size = 3.5,
+    color = "white"
+  ) +
+  scale_y_continuous(position = "right") +
+  coord_flip() +
+  labs(
+    title = "**Distance by club**<br>(return, in km)"
+  ) +
+  theme_custom()
+
+# Shortest distances between venues
+p2 <- df_distances %>%
+  mutate(
+    clubLabel_short.x = bundesliga_clubs_shortname[clubLabel.x],
+    clubLabel_short.y = bundesliga_clubs_shortname[clubLabel.y],
+    direction_label = sprintf("%s - %s",
+                                   pmin(clubLabel_short.x, clubLabel_short.y),
+                                   pmax(clubLabel_short.x, clubLabel_short.y))) %>%
+  distinct(direction_label, distance_oneway) %>%
+  slice_min(order_by = distance_oneway, n = 10) %>%
+  mutate(direction_label = fct_reorder(direction_label, -distance_oneway)) %>%
+  ggplot(aes(direction_label, distance_oneway / 1000)) +
+  geom_col(fill = bar_color) +
+  geom_text(
+    aes(y = 1, label = direction_label),
+    hjust = 0, vjust = 0.5, family = "Source Sans Pro", size = 3.5,
+    color = "white"
+  ) +
+  scale_y_continuous(position = "right") +
+  coord_flip() +
+  labs(
+    title = "**Shortest distances**<br>between stadiums<br>(oneway, in km)"
+  ) +
+  theme_custom()
+
+# Longest distances between venues
+p3 <- df_distances %>%
+  mutate(
+    clubLabel_short.x = bundesliga_clubs_shortname[clubLabel.x],
+    clubLabel_short.y = bundesliga_clubs_shortname[clubLabel.y],
+    direction_label = sprintf("%s - %s",
+                              pmin(clubLabel_short.x, clubLabel_short.y),
+                              pmax(clubLabel_short.x, clubLabel_short.y))) %>%
+  distinct(direction_label, distance_oneway) %>%
+  slice_max(order_by = distance_oneway, n = 10) %>%
+  mutate(direction_label = fct_reorder(direction_label, distance_oneway)) %>%
+  ggplot(aes(direction_label, distance_oneway / 1000)) +
+  geom_col(fill = bar_color) +
+  geom_text(
+    aes(y = 10, label = direction_label),
+    hjust = 0, vjust = 0.5, family = "Source Sans Pro", size = 3.5,
+    color = "white"
+  ) +
+  scale_y_continuous(position = "right", minor_breaks = seq(0, 1000, 10)) +
+  coord_flip() +
+  labs(
+    title = "**Longest distances**<br>between stadiums<br>(oneway, in km)"
+  ) +
+  theme_custom()
+
+# Combine plots using {patchwork}
+p4 + p1 + p2 + p3 +
+  plot_layout(design = "
+              111
+              111
+              234
+              ")
+
+ggsave(here("plots", "07-navigation.png"), width = 8, height = 9, scale = 1.2,
+       bg = bg_color)
+
