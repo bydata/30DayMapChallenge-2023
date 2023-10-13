@@ -152,9 +152,9 @@ color_palette2 <- c(
 
 p <- buildings_hausnr_around_cathedral %>%
   mutate(baujahr_alt_grp = cut(
-    baujahr_alt, breaks = c(0, 1600, 1800, 1900, 1945, 1950, 1960, 1980, 2000, Inf),
-    labels = c("1600 or earlier", "1601-1800", "1801-1900", "1901-1945", "1946-1950",
-               "1951-1960", "1961-1980", "1981-2000", "after 2000")),
+    baujahr_alt, breaks = c(0, 1600, 1800, 1900, 1945, 1955, 1965, 1975, 1990, Inf),
+    labels = c("1600 or earlier", "1601-1800", "1801-1900", "1901-1945", "1946-1955",
+               "1956-1965", "1966-1975", "1976-1990", "after 1990")),
     baujahr_alt_grp = fct_na_value_to_level(baujahr_alt_grp, "Unknown/no data")) %>%
   ggplot() +
   geom_sf(
