@@ -131,8 +131,8 @@ df_plot <- df_distances %>%
          )
 
 
-bg_color <- "grey12"
 bg_color <- "#0A153B"
+bar_color <- "#74A4BC"
 
 p4 <- df_plot %>%
   ggplot() +
@@ -149,8 +149,6 @@ p4 <- df_plot %>%
     curvature = 0.05, linewidth = 0.2, color = "grey96",
     arrow = arrow(angle = 15, type = "closed", length = unit(1.5, "mm"))
   ) +
-  geom_sf(aes(geometry = coordinates.y),
-          shape = 21, color = "grey96") +
   # add club icons
   geom_richtext(
     data = ~distinct(., clubLabel.x, icon_tag, coordinates.x_lon, coordinates.x_lat),
@@ -198,9 +196,6 @@ theme_custom <- function() {
   )
 }
 
-bar_color <- "#74A4BC"
-# bar_color <- "#4A6C6F"
-# bar_color <- "#2EC4B6"
 
 # Distances (return) travelled per club
 p1 <- df_distances_season %>%
@@ -212,7 +207,8 @@ p1 <- df_distances_season %>%
     hjust = 0, vjust = 0.5, family = "Source Sans Pro", size = 3.5,
     color = "white"
   ) +
-  scale_y_continuous(position = "right") +
+  scale_y_continuous(position = "right", breaks = seq(0, 20000, 5000),
+                     minor_breaks = seq(2500, 20000, 2500)) +
   coord_flip() +
   labs(
     title = "**Distance by club**<br>(return, in km)"
@@ -242,7 +238,7 @@ p2 <- df_distances %>%
     hjust = 0, vjust = 0.5, family = "Source Sans Pro", size = 3.5,
     color = "white"
   ) +
-  scale_y_continuous(position = "right") +
+  scale_y_continuous(position = "right", breaks = seq(0, 100, 10)) +
   coord_flip() +
   labs(
     title = "**Shortest distances**<br>between stadiums<br>(oneway, in km)"
