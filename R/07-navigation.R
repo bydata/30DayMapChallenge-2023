@@ -140,7 +140,7 @@ p4 <- df_plot %>%
   geom_sf(
     data = de,
     aes(geometry = geometry),
-    fill = colorspace::lighten(bg_color, 0.5)
+    fill = colorspace::lighten(bg_color, 0.33)
   ) +
   geom_curve(
     aes(
@@ -231,9 +231,14 @@ p2 <- df_distances %>%
   slice_min(order_by = distance_oneway, n = 10) %>%
   mutate(direction_label = fct_reorder(direction_label, -distance_oneway)) %>%
   ggplot(aes(direction_label, distance_oneway / 1000)) +
-  geom_col(fill = bar_color) +
+  geom_segment(
+    aes(
+      xend = direction_label,
+      y = 0, yend = distance_oneway / 1000),
+    col = bar_color, linewidth = 0.8,
+    arrow = arrow(angle = 15, type = "closed", length = unit(1.5, "mm"))) +
   geom_text(
-    aes(y = 1, label = direction_label),
+    aes(x = as.numeric(direction_label) + 0.3, y = 0, label = direction_label),
     hjust = 0, vjust = 0.5, family = "Source Sans Pro", size = 3.5,
     color = "white"
   ) +
@@ -255,10 +260,15 @@ p3 <- df_distances %>%
   distinct(direction_label, distance_oneway) %>%
   slice_max(order_by = distance_oneway, n = 10) %>%
   mutate(direction_label = fct_reorder(direction_label, distance_oneway)) %>%
-  ggplot(aes(direction_label, distance_oneway / 1000)) +
-  geom_col(fill = bar_color) +
+  ggplot(aes(direction_label)) +
+  geom_segment(
+    aes(
+      xend = direction_label,
+      y = 0, yend = distance_oneway / 1000),
+    col = bar_color, linewidth = 0.8,
+    arrow = arrow(angle = 15, type = "closed", length = unit(1.5, "mm"))) +
   geom_text(
-    aes(y = 10, label = direction_label),
+    aes(x = as.numeric(direction_label) + 0.3, y = 0, label = direction_label),
     hjust = 0, vjust = 0.5, family = "Source Sans Pro", size = 3.5,
     color = "white"
   ) +
@@ -268,6 +278,7 @@ p3 <- df_distances %>%
     title = "**Longest distances**<br>between stadiums<br>(oneway, in km)"
   ) +
   theme_custom()
+p3
 
 # Combine plots using {patchwork}
 p4 + p1 + p2 + p3 +
@@ -279,4 +290,11 @@ p4 + p1 + p2 + p3 +
 
 ggsave(here("plots", "07-navigation.png"), width = 8, height = 9, scale = 1.2,
        bg = bg_color)
+
+
+
+## Histogram of distances
+df_distances %>%
+  ggplot(aes(distance_return / 1000)) +
+  geom_histogram(binwidth = 50)
 
