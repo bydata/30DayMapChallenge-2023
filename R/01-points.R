@@ -17,6 +17,8 @@ min_date <- as_date("1961-01-01")
 active_stations_meta <- metaIndex %>%
   filter(von_datum <= min_date & var == "kl" & res == "monthly"
          & per == "recent" & hasfile)
+n_active_stations <- nrow(active_stations_meta)
+
 
 # Get the download URLs for all stations that match the criteria
 station_ids <- unique(active_stations_meta$Stations_id)
@@ -123,8 +125,10 @@ calculate_recent <- function(x) {
 
 dfs_historical <- map(dfs_prep, calculate_historical, .progress = TRUE)
 dfs_historical_avg <- map(dfs_prep, calculate_historical_average,
-                          reference_period_start_year = 1991,
-                          reference_period_end_year = 2020,
+                          # reference_period_start_year = 1991,
+                          # reference_period_end_year = 2020,
+                          reference_period_start_year = 1961,
+                          reference_period_end_year = 1990,
                           .progress = TRUE)
 dfs_recent <- map(dfs_prep, calculate_recent, .progress = TRUE)
 
@@ -139,7 +143,8 @@ compare_recent_to_historical <- function(recent, historical) {
     filter(diff_recent_txk > 0)
 }
 
-compare_recent_to_historical_avg <- function(recent, historical_avg, keep_recent_below_avg = TRUE) {
+compare_recent_to_historical_avg <- function(recent, historical_avg,
+                                             keep_recent_below_avg = TRUE) {
   df <- historical_avg %>%
     inner_join(recent, by = join_by(stations_id, month)) %>%
     mutate(
@@ -155,13 +160,8 @@ compare_recent_to_historical_avg <- function(recent, historical_avg, keep_recent
   df
 }
 
-dfs_comparison <- map2(dfs_recent, dfs_historical, compare_recent_to_historical, .progress = TRUE)
-dfs_comparison_avg <- map2(dfs_recent, dfs_historical_avg, compare_recent_to_historical_avg, .progress = TRUE)
-
-dfs_comparison %>%
-  bind_rows() %>%
-  count(stations_id, stations_name, sort = TRUE) %>% View()
-
+dfs_comparison_avg <- map2(dfs_recent, dfs_historical_avg,
+                           compare_recent_to_historical_avg, .progress = TRUE)
 
 ## Shape Germany
 shp_de <- giscoR::gisco_get_countries(resolution = "20", country = "Germany")
@@ -169,30 +169,55 @@ centroid_de <- sf::st_centroid(shp_de) %>%
   sf::st_coordinates()
 
 dfs_comparison_avg %>%
-  bind_rows() %>% #View()
+  bind_rows() %>%
   mutate(month_name = factor(month.name[month], levels = month.name)) %>%
   ggplot(aes(lon, lat)) +
   geom_sf(
     data = shp_de,
     inherit.aes = FALSE,
-    fill = "grey90", col = "grey20", linewidth = 0.1
+    fill = "grey95", col = "grey20", linewidth = 0.1
   ) +
   geom_point(
     aes(fill = diff_recent_as_sd),
-    shape = 21, col = "grey20", stroke = 0.1, size = 1.6) +
+    shape = 21, col = "grey20", stroke = 0.1, size = 1.75) +
   colorspace::scale_fill_continuous_diverging("Blue-Red 2", breaks = seq(-3, 3, 1)) +
   geom_richtext(
     data = ~group_by(., month_name) %>%
       summarize(avg_reference = mean(reference_avg_lufttemperatur),
                 avg_recent = mean(recent_mean_tmk.lufttemperatur)),
-    aes(x = centroid_de[, "X"], y = 52,
-        label = sprintf("\U00D8 reference: **%2.1f** °C | 2023: **%2.1f** °C", avg_reference, avg_recent)),
-    fill = "#FFFFFF99", family = "Source Sans Pro", label.size = 0, size = 3
+    aes(x = centroid_de[, "X"] + 4, y = 45.65,
+        label = sprintf("\U00D8 reference: **%2.1f** °C<br>2023: **%2.1f** °C",
+                        avg_reference, avg_recent)),
+    # fill = "#FFFFFFAA",
+    fill = NA,
+    family = "Source Sans Pro", label.size = 0, size = 3.25, vjust = 0, hjust = 1
   ) +
+  coord_sf(ylim = c(45.65, NA)) +
   facet_wrap(vars(month_name), labeller = as_labeller(toupper)) +
+  labs(
+    title = "2023 has been warmer in most places in Germany",
+    subtitle = glue::glue(
+    "Each point represents one of {n_active_stations} weather stations
+    which have been maintained at least since {year(min_date)}.
+    The points are coloured by difference between the average temperature in the
+    particular month in 2023 and the long-term average in the reference period,
+    measured in standard deviations.
+    The reference period is 1961 to 1990."),
+    caption = "Source: DWD Open Data. Visualization: Ansgar Wolsing",
+    fill = "Difference to reference temperature<br>*(standard deviations)*"
+  ) +
   theme_void(base_family = "Source Sans Pro") +
   theme(
-    plot.background = element_rect(color = "grey94", fill = "grey94"),
-    legend.position = c(0.65, 0.2)
+    plot.background = element_rect(color = "grey90", fill = "grey90"),
+    plot.margin = margin(rep(4, 4)),
+    plot.title = element_text(face = "bold", size = 20, hjust = 0.5),
+    plot.subtitle = element_textbox(
+      width = 1, hjust = 0.5, halign = 0.5, lineheight = 1,
+      margin = margin(t = 8, b = 16)),
+    legend.position = c(0.75, 0.18),
+    legend.title = element_markdown(),
+    strip.text = element_text(family = "Source Sans Pro Semibold", size = 11,
+                              color = "grey40")
   )
-ggsave(file.path("plots", "01-points.png"), width = 8, height = 8)
+ggsave(file.path("plots", "01-points.png"), width = 7, height = 7 * 9/7)
+
