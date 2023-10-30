@@ -137,46 +137,34 @@ ggplot() +
   ) +
   # Add the glowing lines in the plot
   glowing_lines +
-  # ggfx::with_outer_glow(
-  #   annotate(
-  #     "richtext",
-  #     # x = 0.23,
-  #     # y = seq(51.2, 51.5, 0.03),
-  #     x = -0.01,
-  #     y = 51.4,
-  #     family = "Source Sans Pro",
-  #     label = paste(sprintf("<span style='color:%s'>%s</span>",
-  #                     unique(underground_df$mapcolour_rgb),
-  #                     unique(underground_df$name)), collapse = "<br>"),
-  #     size = 3, color = "white",
-  #     # fill = alpha("white", 0.05),
-  #     fill = NA,
-  #     hjust = 0, label.size = 0, label.padding = unit(2, "mm")
-  #   ),
-  #   sigma = 2, expand = 0.1, colour = "grey80"
-  # ) +
+  # Title inside the map
+  annotate(
+    "text",
+    x = -0.15, y = 51.375,
+    label = "LONDON\nUNDERGROUND",
+    color = bg_color, size = 9, family = "Roboto Condensed", fontface = "bold",
+    hjust = 0, lineheight = 0.65
+  ) +
+  # Legend
   annotate(
     "richtext",
     x = st_coordinates(st_centroid(shp_city))[1, "X"],
-    y = 51.3,
-    family = "Source Sans Pro",
+    y = 51.26,
+    family = "Roboto Condensed",
     label = paste(sprintf("<span style='color:%s'>%s</span>",
                           unique(underground_df$mapcolour_rgb),
                           unique(underground_df$name)), collapse = " "),
-    size = 3, color = "white", fill = alpha("white", 0.05),
+    size = 3.5, color = "white", fill = alpha("white", 0.1),
     hjust = 0.5, label.size = 0, label.padding = unit(2, "mm")
   ) +
   scale_color_identity() +
   coord_sf(clip = "off") +
-  labs(
-    title = "LONDON UNDERGROUND"
-  ) +
-  theme_void(base_family = "Source Sans Pro") +
+  theme_void(base_family = "Roboto Condensed") +
   theme(
     plot.background = element_rect(color = bg_color, fill = bg_color),
     panel.margin = margin(rep(5, 4)),
     text = element_text(color = "grey80"),
     plot.title = element_text(
-      hjust = 0.5, size = 24, color = "grey86", family = "Source Sans Pro Semibold")
+      hjust = 0.5, size = 24, color = "grey86", family = "Roboto Condensed")
   )
 dev.off()
