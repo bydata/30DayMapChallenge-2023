@@ -65,17 +65,6 @@ underground_df$name
 
 lines_regex <- paste0("(?i)", paste(underground_df$name, collapse = "|"))
 
-# underground_features$osm_lines %>%
-#   transmute(line_name = str_extract(name, lines_regex))
-# underground_features$osm_lines %>%
-#   filter(!is.na(name)) %>%
-#   transmute(
-#     id = row_number(),
-#     name,
-#     line_name = str_extract_all(name, lines_regex)) %>%
-#   unnest(cols = line_name) %>%
-#   View()
-
 underground_features_lines <- underground_features$osm_lines %>%
   filter(!is.na(name)) %>%
   mutate(
@@ -86,16 +75,21 @@ underground_features_lines <- underground_features$osm_lines %>%
   select(row_id, osm_id, name, line_name, geometry) %>%
   inner_join(underground_df, by = join_by(line_name == name))
 
+
+## Resolve overlapping lines
+
 # Move the District Line slightly North
 shift_north_value <- 0.0025
 underground_features_lines$geometry[underground_features_lines$line_name == "District"] <-
   underground_features_lines$geometry[underground_features_lines$line_name == "District"] +
   shift_north_value
-
-# Move the Circle Line slightly North
-shift_north_value <- 0.0025
+# Move the Circle Line slightly South
 underground_features_lines$geometry[underground_features_lines$line_name == "Circle"] <-
   underground_features_lines$geometry[underground_features_lines$line_name == "Circle"] -
+  shift_north_value
+# Move the Metropolitan Line slightly South
+underground_features_lines$geometry[underground_features_lines$line_name == "Metropolitan"] <-
+  underground_features_lines$geometry[underground_features_lines$line_name == "Metropolitan"] -
   shift_north_value
 
 
