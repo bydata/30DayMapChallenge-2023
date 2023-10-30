@@ -2,6 +2,7 @@ library(tidyverse)
 library(sf)
 library(osmdata)
 library(rvest)
+library(ggtext)
 library(here)
 
 #' Download noise pollution data (Rail Noise: Lnight) from:
@@ -85,36 +86,43 @@ underground_features_lines <- underground_features$osm_lines %>%
   select(row_id, osm_id, name, line_name, geometry) %>%
   inner_join(underground_df, by = join_by(line_name == name))
 
-# # Move the District Line slightly North
-# shift_north_value <- 0.01
-# underground_features_lines$geometry[underground_features_lines$name == "District Line"] <-
-#   underground_features_lines$geometry[underground_features_lines$name == "District Line"] +
-#   shift_north_value
+# Move the District Line slightly North
+shift_north_value <- 0.0025
+underground_features_lines$geometry[underground_features_lines$line_name == "District"] <-
+  underground_features_lines$geometry[underground_features_lines$line_name == "District"] +
+  shift_north_value
+
+# Move the Circle Line slightly North
+shift_north_value <- 0.0025
+underground_features_lines$geometry[underground_features_lines$line_name == "Circle"] <-
+  underground_features_lines$geometry[underground_features_lines$line_name == "Circle"] -
+  shift_north_value
+
 
 bg_color <- "grey13"
 
-
-geom_line_outer_glow <- function(x) {
-
-  df <- ~subset(., line_name == x)
-  # colour <- unique(df$mapcolour_rgb)[1]
-  colour <- "blue"
+geom_line_outer_glow <- function(x, df = underground_features_lines) {
+  df <- subset(df, line_name == x)
+  colour <- head(df$mapcolour_rgb, 1)
 
   ggfx::with_outer_glow(
     geom_sf(
       data = df,
       color = colour,
-      linewidth = 0.4
+      linewidth = 0.5
     ),
-    expand = 8, sigma = 4,
-    colour = colorspace::lighten(colour, 0.6)
+    expand = 7, sigma = 6,
+    colour = colorspace::lighten(colour, 0.7)
   )
 }
 
-ragg::agg_png(here("plots", "02-lines-with-glow.png"), width = 8, height = 5,
-              res = 600, units = "in")
-underground_features_lines %>%
-  ggplot() +
+# Make the lines glow!
+glowing_lines <- map(unique(underground_df$name), geom_line_outer_glow)
+
+
+ragg::agg_png(here("plots", "02-lines-with-glow.png"), width = 8, height = 6,
+              res = 300, units = "in", bg = bg_color)
+ggplot() +
   geom_sf(
     data = shp_city,
     fill = "grey20", linewidth = 0
@@ -127,45 +135,48 @@ underground_features_lines %>%
     data = water_features$osm_multipolygons,
     fill = bg_color, linewidth = 0
   ) +
+  # Add the glowing lines in the plot
+  glowing_lines +
   # ggfx::with_outer_glow(
-  #   geom_sf(
-  #     aes(color = line_name),
-  #     linewidth = 0.8
+  #   annotate(
+  #     "richtext",
+  #     # x = 0.23,
+  #     # y = seq(51.2, 51.5, 0.03),
+  #     x = -0.01,
+  #     y = 51.4,
+  #     family = "Source Sans Pro",
+  #     label = paste(sprintf("<span style='color:%s'>%s</span>",
+  #                     unique(underground_df$mapcolour_rgb),
+  #                     unique(underground_df$name)), collapse = "<br>"),
+  #     size = 3, color = "white",
+  #     # fill = alpha("white", 0.05),
+  #     fill = NA,
+  #     hjust = 0, label.size = 0, label.padding = unit(2, "mm")
   #   ),
-  #   expand = 8, colour = "white", sigma = 4
+  #   sigma = 2, expand = 0.1, colour = "grey80"
   # ) +
-  ggfx::with_outer_glow(
-    geom_sf(
-      data = ~subset(., line_name == "District"),
-      color = "#34783B",
-      linewidth = 0.4
-    ),
-    expand = 9, colour = colorspace::lighten("#34783B", 0.8), sigma = 2
+  annotate(
+    "richtext",
+    x = st_coordinates(st_centroid(shp_city))[1, "X"],
+    y = 51.3,
+    family = "Source Sans Pro",
+    label = paste(sprintf("<span style='color:%s'>%s</span>",
+                          unique(underground_df$mapcolour_rgb),
+                          unique(underground_df$name)), collapse = " "),
+    size = 3, color = "white", fill = alpha("white", 0.05),
+    hjust = 0.5, label.size = 0, label.padding = unit(2, "mm")
   ) +
-  # ggfx::with_outer_glow(
-  #   geom_sf(
-  #     data = ~subset(., line_name == "Victoria Line"),
-  #     color = "#48A1DB",
-  #     linewidth = 0.4
-  #   ),
-  #   expand = 9, sigma = 2,
-  #   colour = colorspace::lighten("#48A1DB", 0.8)
-  # ) +
-  # geom_line_outer_glow("Victoria Line", "#48A1DB") +
-  geom_line_outer_glow("Victoria") +
-  ggfx::with_outer_glow(
-    geom_sf(
-      data = ~subset(., line_name == "Northern"),
-      color = "#000000",
-      linewidth = 0.4
-    ),
-    expand = 9, colour = colorspace::lighten("#000000", 0.8), sigma = 2
+  scale_color_identity() +
+  coord_sf(clip = "off") +
+  labs(
+    title = "LONDON UNDERGROUND"
   ) +
-  scale_color_manual(values = underground_df$mapcolour_rgb) +
-  theme_void() +
+  theme_void(base_family = "Source Sans Pro") +
   theme(
     plot.background = element_rect(color = bg_color, fill = bg_color),
-    text = element_text(color = "grey80")
+    panel.margin = margin(rep(5, 4)),
+    text = element_text(color = "grey80"),
+    plot.title = element_text(
+      hjust = 0.5, size = 24, color = "grey86", family = "Source Sans Pro Semibold")
   )
 dev.off()
-
