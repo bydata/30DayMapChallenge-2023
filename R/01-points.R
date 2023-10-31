@@ -22,19 +22,44 @@ n_active_stations <- nrow(active_stations_meta)
 
 # Get the download URLs for all stations that match the criteria
 station_ids <- unique(active_stations_meta$Stations_id)
-data_urls <- map(
-  station_ids,
-  ~selectDWD(id = .x, res = "daily", var = "kl", per = "hr",
-                  exactmatch = TRUE))
+
+# Update only recent files // run if you have pulled the data at least once before
+update_only_recent <- TRUE
+if (update_only_recent) {
+  message("Updating recent files.")
+  data_urls <- map(
+    station_ids,
+    ~selectDWD(id = .x, res = "daily", var = "kl",
+               per = "r", # only recent
+               exactmatch = TRUE))
+} else {
+  data_urls <- map(
+    station_ids,
+    ~selectDWD(id = .x, res = "daily", var = "kl", per = "hr",
+               exactmatch = TRUE))
+  message("Updating historic and recent files.")
+}
 
 # Download datasets, returning the local storage file name
 files <- map(
   data_urls,
   ~dataDWD(.x, dir = file.path("data", "dwd-stations"), read = FALSE, force = TRUE))
 
+# Add the filepath of historical file (required if you only update the recent files)
+files_hist_and_recent <- vector("list", length = length(files))
+files_local_hist <- here("data", "dwd-stations",
+                         list.files(here("data", "dwd-stations"),
+                                    pattern = "daily_kl_historical"))
+files_hist_and_recent <- map2(files, seq_along(files), function(x, i) {
+  # find the historical data for this station
+  station_id <- str_extract(x, "_(\\d{5})_akt.zip", group = 1)
+  file_hist <- files_local_hist[str_detect(files_local_hist, sprintf("tageswerte_KL_%s_", station_id))]
+
+  c(x, file_hist)
+})
 
 # Read the files from the zip archives
-dfs <- map(files, readDWD, varnames = TRUE)
+dfs <- map(files_hist_and_recent, readDWD, varnames = TRUE)
 
 combine_historical_and_recent <- function(x) {
   df <- bind_rows(x)
@@ -89,9 +114,10 @@ calculate_historical <- function(x, exclude_current_year = TRUE) {
            stations_name = Stationsname)
 }
 
-calculate_historical_average <- function(x,
-                                         reference_period_start_year = 1961,
-                                         reference_period_end_year = 1990) {
+calculate_historical_average <- function(
+    x,
+    reference_period_start_year = 1961,
+    reference_period_end_year = 1990) {
   x %>%
     filter(year >= reference_period_start_year & year <= reference_period_end_year) %>%
     group_by(stations_id, Stationsname, geoBreite, geoLaenge, month) %>%
@@ -201,7 +227,8 @@ dfs_comparison_avg %>%
     which have been maintained at least since {year(min_date)}.
     The points are coloured by difference between the average temperature in the
     particular month in 2023 and the long-term average in the reference period,
-    measured in standard deviations.
+    measured in standard deviations. (Standard deviation is a statistical measure
+    that quantifies the amount of variation in a set of data points.)<br>
     The reference period is 1961 to 1990."),
     caption = "Source: DWD Open Data. Visualization: Ansgar Wolsing",
     fill = "Difference to reference temperature<br>*(standard deviations)*"
@@ -212,12 +239,12 @@ dfs_comparison_avg %>%
     plot.margin = margin(rep(4, 4)),
     plot.title = element_text(face = "bold", size = 20, hjust = 0.5),
     plot.subtitle = element_textbox(
-      width = 1, hjust = 0.5, halign = 0.5, lineheight = 1,
-      margin = margin(t = 8, b = 16)),
+      width = 1.0, hjust = 0.5, halign = 0.5, lineheight = 1,
+      margin = margin(t = 8, b = 20)),
     legend.position = c(0.75, 0.18),
     legend.title = element_markdown(),
     strip.text = element_text(family = "Source Sans Pro Semibold", size = 11,
                               color = "grey40")
   )
-ggsave(file.path("plots", "01-points.png"), width = 7, height = 7 * 9/7)
+ggsave(file.path("plots", "01-points.png"), width = 7, height = 10)
 
