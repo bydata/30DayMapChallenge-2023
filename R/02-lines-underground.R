@@ -145,9 +145,12 @@ ggplot() +
     x = st_coordinates(st_centroid(shp_city))[1, "X"],
     y = 51.26,
     family = "Roboto Condensed",
-    label = paste(sprintf("<span style='color:%s'>%s</span>",
-                          unique(underground_df$mapcolour_rgb),
-                          unique(underground_df$name)), collapse = " "),
+    label = paste(
+      sprintf("<span style='color:%s'>%s</span>",
+              ifelse(unique(underground_df$mapcolour_rgb) == "#791B53",
+                     colorspace::lighten("#791B53", 0.25),
+                     unique(underground_df$mapcolour_rgb)),
+              unique(underground_df$name)), collapse = " "),
     size = 3.5, color = "white", fill = alpha("white", 0.1),
     hjust = 0.5, label.size = 0, label.padding = unit(2, "mm")
   ) +
