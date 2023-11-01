@@ -82,6 +82,7 @@ combine_historical_and_recent <- function(x) {
   df
 }
 
+# Combine recent and historical data - this takes a couple of minutes
 dfs_combined <- map(dfs, combine_historical_and_recent, .progress = TRUE)
 dfs_combined <- set_names(dfs_combined, unique(active_stations_meta$Stationsname))
 write_rds(dfs_combined, here("output", "dwd-stations-pre.rds"))
@@ -206,7 +207,6 @@ dfs_comparison_avg %>%
   geom_point(
     aes(fill = diff_recent_as_sd),
     shape = 21, col = "grey20", stroke = 0.1, size = 1.75) +
-  colorspace::scale_fill_continuous_diverging("Blue-Red 2", breaks = seq(-3, 3, 1)) +
   geom_richtext(
     data = ~group_by(., month_name) %>%
       summarize(avg_reference = mean(reference_avg_lufttemperatur),
@@ -218,6 +218,9 @@ dfs_comparison_avg %>%
     fill = NA,
     family = "Source Sans Pro", label.size = 0, size = 3.25, vjust = 0, hjust = 1
   ) +
+  colorspace::scale_fill_continuous_diverging(
+    "Blue-Red 2", breaks = seq(-3, 3, 1),
+    labels = function(x) ifelse(x > 0, paste0("+", x), x)) +
   coord_sf(ylim = c(45.65, NA)) +
   facet_wrap(vars(month_name), labeller = as_labeller(toupper)) +
   labs(
@@ -247,4 +250,5 @@ dfs_comparison_avg %>%
                               color = "grey40")
   )
 ggsave(file.path("plots", "01-points.png"), width = 7, height = 10)
+ggsave(file.path("plots", "01-points-2.png"), width = 5, height = 5/7 * 10, scale = 7/5)
 
