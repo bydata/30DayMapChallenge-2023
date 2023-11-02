@@ -67,7 +67,8 @@ bad_places <- places %>%
   filter(str_detect(name, "^Bad\\s"))
 
 # load country shape
-shp <- giscoR::gisco_get_countries(country = "Germany", resolution = "10")
+shp <- giscoR::gisco_get_nuts(
+  country = "Germany", resolution = "10", nuts_level = 1)
 
 bad_places <- st_as_sf(bad_places, coords = c("longitude", "latitude"))
 st_crs(bad_places) <- st_crs(shp)
@@ -98,3 +99,4 @@ ggplot() +
     plot.margin = margin(rep(4, 4))
   )
 ggsave(here("plots", "04-bad.png"), width = 4.8, height = 5.8)
+
