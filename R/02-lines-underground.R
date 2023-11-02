@@ -5,12 +5,8 @@ library(rvest)
 library(ggtext)
 library(here)
 
-#' Download noise pollution data (Rail Noise: Lnight) from:
-#' https://data.london.gov.uk/dataset/noise-pollution-in-london
-#' and unzip the archive
 
 ## Get shape of London
-
 shp_city <- getbb("London, United Kingdom", format_out = "sf_polygon", limit = 1)
 st_crs(shp_city)
 st_bbox(shp_city)
