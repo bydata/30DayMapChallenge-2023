@@ -152,12 +152,14 @@ ggplot() +
   ) +
   scale_color_identity() +
   coord_sf(clip = "off") +
+  labs(
+    caption = "Source: OpenStreetMap contributors, Wikipedia. Visualization: Ansgar Wolsing"
+  ) +
   theme_void(base_family = "Roboto Condensed") +
   theme(
     plot.background = element_rect(color = bg_color, fill = bg_color),
     plot.margin = margin(rep(5, 4)),
-    text = element_text(color = "grey80"),
-    plot.title = element_text(
-      hjust = 0.5, size = 24, color = "grey86", family = "Roboto Condensed")
+    plot.caption = element_text(
+      hjust = 0.5, size = 6, color = "grey76")
   )
 dev.off()
