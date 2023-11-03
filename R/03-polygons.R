@@ -2,13 +2,9 @@ library(tidyverse)
 library(here)
 library(ggtext)
 library(sf)
-library(osmdata)
 library(jsonlite)
 
 ## GEOMETRIES ==================================================================
-
-## Area of Cologne
-coords_cgn <- getbb("Cologne, Germany", format_out = "sf_polygon")
 
 ## GET BUILDINGS DATA ====================================================================
 #' Source: https://www.offenedaten-koeln.de/dataset/adresse
