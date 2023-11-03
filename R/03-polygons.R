@@ -1,5 +1,3 @@
-# pacman::p_load("tidyverse", "here", "glue", "ggtext", "colorspace",
-#                "sf", "osmdata", "geojsonsf", "jsonlite")
 library(tidyverse)
 library(here)
 library(ggtext)
@@ -11,8 +9,6 @@ library(jsonlite)
 
 ## Area of Cologne
 coords_cgn <- getbb("Cologne, Germany", format_out = "sf_polygon")
-coords_cathedral <- getbb("Kölner Dom, Cologne, Germany",
-                          featuretype = "church")
 
 ## GET BUILDINGS DATA ====================================================================
 #' Source: https://www.offenedaten-koeln.de/dataset/adresse
@@ -93,8 +89,7 @@ read_housenumber_data <- function(offset, data_dir, file_prefix = "hausnummern_"
 # Load housenumber data // ignore corrupt file idx 101
 hausnummern <- map_dfr(offsets[c(1:100, 102:162)], read_housenumber_data, data_dir = housenumber_data_dir)
 
-# merge buildings and hausnummern
-
+# Merge buildings and hausnummern
 buildings_hausnr <- buildings2 %>%
   mutate(HAUSNR = as.character(HAUSNR)) %>%
   left_join(hausnummern, by = c("STRID" = "nr_strasse", "HAUSNR" = "hausnr"))
@@ -102,7 +97,6 @@ buildings_hausnr <- buildings2 %>%
 # Add cathedral build year (Object ID R02EVZW)
 buildings_hausnr <- buildings_hausnr %>%
   mutate(baujahr_alt = ifelse(OBJID == "R02EVZW", 1880, baujahr_alt))
-
 
 
 # non-matching rows in buildings dataframe
@@ -122,7 +116,6 @@ st_crs(buildings_hausnr)
 colnames(buildings_hausnr)
 glimpse(buildings_hausnr)
 
-
 buildings_hausnr %>%
   st_drop_geometry() %>%
   count(baujahr_alt, sort = TRUE) %>%
@@ -139,15 +132,6 @@ cathedral_point_buffered <- cathedral_point %>%
   st_buffer(1800)
 buildings_hausnr_around_cathedral <- buildings_hausnr %>%
   st_filter(cathedral_point_buffered)
-
-# color_palette <- paletteer::paletteer_d("colorBlindness::Blue2DarkRed12Steps")
-# color_palette2 <- color_palette[c(2, 3, 4, 6, 7, 8, 9, 10, 12)]
-# color_palette2 <- c(
-#   "#7AE7C7", "#5a56bc", "#7678edff","#b79877ff",
-#   "#d7a83c", "#f7b801", "#f4a001", "#f18701", "#f35b04")
-color_palette2 <- c(
-  "#FFFFFF", "#FF0000", "#0000FF", "#008000", "#FFD700", "#FF00FF",
-  "#00FFFF", "#FFA500", "#800080")
 
 
 p <- buildings_hausnr_around_cathedral %>%
@@ -168,15 +152,14 @@ p <- buildings_hausnr_around_cathedral %>%
     fill = "#FFA500",
     color = NA
   ) +
-  scale_fill_manual(values = c(unclass(color_palette2), "grey60")) +
   coord_sf() +
   facet_wrap(vars(baujahr_alt_grp2)) +
   guides(fill = guide_legend(title.position = "top", direction = "horizontal",
                              byrow = FALSE)) +
   labs(
     title = "Buildings of Cologne",
-    subtitle = "Build year for the buildings in Cologne, Germany
-    that exists today (2016),<br>area within 1,800 meters from the Cologne Cathedral",
+    subtitle = "Construction year of the buildings in Cologne, Germany
+    that exist today (2016),<br>area within 1,800 meters of Cologne Cathedral",
     caption = "Source: Offene Daten Köln. Visualization: Ansgar Wolsing",
     fill = "Year of Construction"
   ) +
@@ -195,40 +178,3 @@ p <- buildings_hausnr_around_cathedral %>%
     strip.text = element_text(face = "bold", size = 10)
   )
 ggsave(here("plots", "03-polygons.png"), dpi = 600, width = 9, height = 10)
-
-
-# p <- buildings_hausnr_around_cathedral %>%
-#   mutate(baujahr_alt_grp = case_when(
-#     baujahr_alt <= 1945 ~ "<= 1945",
-#     baujahr_alt >  1945 ~ ">1945",
-#     is.na(baujahr_alt) ~ "Unknown/no data")) %>%
-#   ggplot() +
-#   geom_sf(
-#     aes(geometry = geometry),
-#     fill = "grey36") +
-#   geom_sf(
-#     data = ~mutate(., baujahr_alt_grp2 = baujahr_alt_grp) %>%
-#       filter(baujahr_alt_grp2 != "Unknown/no data"),
-#     aes(geometry = geometry, fill = baujahr_alt_grp2),
-#     color = NA
-#   ) +
-#   scale_fill_manual(values = c("#eb925b", "#5BC0EB")) +
-#   coord_sf() +
-#   facet_wrap(vars(baujahr_alt_grp2)) +
-#   guides(fill = guide_legend(title.position = "top", direction = "horizontal", byrow = FALSE)) +
-#   labs(
-#     title = "COLOGNE",
-#     caption = "Source: Offene Daten Köln, OpenStreetmap contributors.
-#     Visualisation: Ansgar Wolsing (Inspiration by @dr_xeo)",
-#     fill = "Year of Construction"
-#   ) +
-#   theme_void(base_family = "Cabinet Grotesk") +
-#   theme(
-#     plot.background = element_rect(color = "grey20", fill = "grey20"),
-#     plot.margin = margin(rep(10, 4)),
-#     text = element_text(color = "grey99"),
-#     plot.title = element_text(size = 36, face = "bold", hjust = 0.5, color = "white"),
-#     plot.caption = element_markdown(hjust = 0.5),
-#     legend.position = "bottom"
-#   )
-# ggsave(here("plots", "buildings01-circle-1945-split.png"), dpi = 200, width = 10, height = 7.5)
