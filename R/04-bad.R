@@ -100,3 +100,83 @@ ggplot() +
   )
 ggsave(here("plots", "04-bad.png"), width = 4.8, height = 5.8)
 
+
+## Bad place density per federal state =========================================
+
+# Total population in Bad places per federal state (admin 1 code)
+bad_places %>%
+  st_drop_geometry() %>%
+  count(admin1_code, wt = population)
+
+# Federal states codes and population
+#' Source: Destatis
+#' https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Bevoelkerung/Bevoelkerungsstand/Tabellen/bevoelkerung-nichtdeutsch-laender.html
+#' Codes from https://download.geonames.org/export/dump/admin1CodesASCII.txt
+federal_states <- tribble(
+  ~admin1_code, ~federal_state, ~population,
+  "10", "Schleswig-Holstein", 2953270,
+  "04", "Hamburg", 1892122,
+  "06", "Niedersachsen", 8140242,
+  "03", "Bremen", 684864,
+  "07", "Nordrhein-Westfalen", 18139116,
+  "05", "Hessen", 6391360,
+  "08", "Rheinland-Pfalz", 4159150,
+  "01", "Baden-Württemberg", 11280257,
+  "02", "Bayern", 13369393,
+  "09", "Saarland", 992666,
+  "16", "Berlin", 3755251,
+  "12", "Brandenburg", 2573135,
+  "12", "Mecklenburg-Vorpommern", 1628378,
+  "13", "Sachsen", 4086152,
+  "14", "Sachsen-Anhalt", 2186643,
+  "15", "Thüringen", 2126846
+)
+
+shp_badplaces_pop_share <- bad_places %>%
+  st_drop_geometry() %>%
+  count(admin1_code, wt = population, .drop = FALSE, name = "badplaces_population") %>%
+  inner_join(federal_states, by = "admin1_code")%>%
+  mutate(federal_state = toupper(federal_state)) %>%
+  right_join(shp, by = join_by(federal_state == NUTS_NAME)) %>%
+  mutate(badplaces_pop_share = badplaces_population / population,
+         badplaces_pop_share = replace_na(badplaces_pop_share, 0)) %>%
+  st_as_sf()
+head(shp_badplaces_pop_share)
+
+
+ggplot() +
+  geom_sf(
+    data = shp_badplaces_pop_share,
+    aes(fill = badplaces_pop_share)
+  ) +
+  geom_sf(
+    data = bad_places,
+    col = "white", fill = "#0B3954", stroke = 0.4, size = 2.5, shape = 24
+  ) +
+  colorspace::scale_fill_continuous_sequential(
+    "Sunset", labels = scales::label_percent()) +
+  guides(fill = guide_colorbar(
+    title = "Share of inhabitants living places named \"Bad\"",
+    title.position = "top")) +
+  labs(
+    title = "Bad Places",
+    subtitle = "\"Bad\" is a frequent component of place names in the German-speaking world,
+    indicating the presence of a spa, especially a health spa.",
+    caption = "Data: GeoNames. Visualization: Ansgar Wolsing"
+  ) +
+  theme_void(base_family = "Source Sans Pro") +
+  theme(
+    plot.background = element_rect(color = "white", fill = "#FFFBF9"),
+    text = element_text(lineheight = 1),
+    plot.title = element_text(hjust = 0.5, family = "Playfair Display", size = 20),
+    plot.subtitle = element_textbox(hjust = 0.5, halign = 0.5, width = 1.2),
+    plot.caption = element_text(hjust = 0.5),
+    plot.margin = margin(rep(4, 4)),
+    legend.position = "bottom",
+    legend.key.height = unit(2, "mm"),
+    legend.key.width = unit(12, "mm"),
+    legend.title.align = 0.5,
+    legend.title = element_text(size = 8, hjust = 0.5),
+    legend.text = element_text(size = 7)
+  )
+ggsave(here("plots", "04-bad-with-pop-share.png"), width = 4.8, height = 5.8)
