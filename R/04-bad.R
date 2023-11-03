@@ -174,7 +174,7 @@ ggplot() +
     plot.margin = margin(rep(4, 4)),
     legend.position = "bottom",
     legend.key.height = unit(2, "mm"),
-    legend.key.width = unit(12, "mm"),
+    legend.key.width = unit(11, "mm"),
     legend.title.align = 0.5,
     legend.title = element_text(size = 8, hjust = 0.5),
     legend.text = element_text(size = 7)
