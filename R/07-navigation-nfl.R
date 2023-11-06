@@ -197,42 +197,64 @@ matchday_distances %>%
         label = "<img src='input/nfl-logos/Buffalo_Bills_logo.svg.png' width=20>"),
     fill = NA, label.size = 0
   ) +
-  # geom_sf_text(
-  #   aes(label = team_name), size = 2, hjust = 0
+  # ggrepel::geom_text_repel(
+  #   aes(x, y, label = team_name), size = 3, hjust = 0
   # ) +
+  scale_size_area(max_size = 18) +
+  theme_void()
+ggsave(here("plots", "07-navigation-nfl.png"), width = 8, height = 6)
+
+
+# "Bar chart" version
+matchday_distances %>%
+  st_drop_geometry() %>%
+  count(team_name, wt = travelled_distance_km_return, name = "total_distance", sort = TRUE) %>%
+  inner_join(select(stadiums_updated, team_name = team, geometry), by = join_by(team_name)) %>%
+  mutate(
+    x = st_coordinates(geometry)[, "X"],
+    y = st_coordinates(geometry)[, "Y"]
+  ) %>%
+  st_as_sf() %>%
+  ggplot() +
+  geom_sf(
+    data = shp_contiguous_states,
+    linetype = "dashed"
+  ) +
+  geom_sf() +
+  geom_rect(
+    aes(
+      xmin = x - 0.5, xmax = x + 0.5,
+      ymin = y, ymax = y + total_distance / 3000),
+    color = "white", fill = "#999999DD"
+  ) +
+  geom_richtext(
+    aes(x, y,
+        label = "<img src='input/nfl-logos/Buffalo_Bills_logo.svg.png' width=20>"),
+    fill = NA, label.size = 0
+  ) +
   ggrepel::geom_text_repel(
-    aes(x, y, label = team_name), size = 3, hjust = 0
+    aes(x, y, label = team_name),
+    size = 3, hjust = 0, family = "Chivo", size = 2
   ) +
   scale_size_area(max_size = 18) +
   theme_void()
-
-# stadiums %>%
-#   mutate(team_corrected = case_match(
-#     team,
-#     "Chicago Bers" ~ "Chicago Bears",
-#     "Washington Redskins" ~ "Washington Commanders",
-#     .default = team
-#   )) %>%
-#   st_drop_geometry() %>%
-#   anti_join(schedule_long, by = join_by(team_corrected == team_name)) %>%
-#   select(team)
+ggsave(here("plots", "07-navigation-nfl.png"), width = 6, height = 6)
 
 
-# Network-like map of connections
-
-matchday_distances %>%
-  filter(travelled_distance > 0) %>%
-  ggplot() +
-  geom_sf(
-    data = shp_contiguous_states
-  ) +
-  geom_curve(
-    aes(
-      x = st_coordinates(st_sfc(geometry.start))[, "X"],
-      xend = st_coordinates(st_sfc(geometry.destination))[, "X"],
-      y = st_coordinates(st_sfc(geometry.start))[, "Y"],
-      yend = st_coordinates(st_sfc(geometry.destination))[, "Y"]
-      ),
-    curvature = 0.2
-  )
+# # Network-like map of connections
+# matchday_distances %>%
+#   filter(travelled_distance > 0) %>%
+#   ggplot() +
+#   geom_sf(
+#     data = shp_contiguous_states
+#   ) +
+#   geom_curve(
+#     aes(
+#       x = st_coordinates(st_sfc(geometry.start))[, "X"],
+#       xend = st_coordinates(st_sfc(geometry.destination))[, "X"],
+#       y = st_coordinates(st_sfc(geometry.start))[, "Y"],
+#       yend = st_coordinates(st_sfc(geometry.destination))[, "Y"]
+#       ),
+#     curvature = 0.2
+#   )
 
