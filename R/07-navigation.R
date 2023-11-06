@@ -163,30 +163,27 @@ p4 <- df_plot %>%
     }
   )) +
   labs(
-    title = "",
     subtitle = "Distances for outward and return journey, measured in a straight
     line (Euclidean distance)"
   ) +
-  theme_void(base_family = "Source Sans Pro") +
+  theme_void(base_family = "Source Sans Pro", base_size = 12) +
   theme(
     plot.background = element_rect(color = bg_color, fill = bg_color),
     text = element_text(color = "grey90"),
     plot.title = element_text(hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5),
+    plot.subtitle = element_markdown(hjust = 0.5, margin = margin(b = 18)),
     strip.text = element_markdown(family = "Source Sans Pro", lineheight = 1.25,
-                                  size = 13)
+                                  size = 11.5)
   )
-p4
-ggsave(here("plots", "07-navigation.png"), width = 7, height = 6)
 
 
 # Chart theme for the bar charts
 theme_custom <- function() {
-  theme_minimal(base_family = "Source Sans Pro") +
+  theme_minimal(base_family = "Source Sans Pro", base_size = 10) +
   theme(
     plot.background = element_rect(color = bg_color, fill = bg_color),
     text = element_text(color = "grey90"),
-    plot.title = element_markdown(hjust = 0.5, lineheight = 1, size = 13),
+    plot.title = element_markdown(hjust = 0.5, lineheight = 1, size = 12),
     axis.text.x.top = element_text(color = "grey90"),
     axis.text.y = element_blank(),
     axis.ticks.x.top = element_line(color = "grey90", size = 0.2),
@@ -211,7 +208,7 @@ p1 <- df_distances_season %>%
                      minor_breaks = seq(2500, 20000, 2500)) +
   coord_flip() +
   labs(
-    title = "**Distance by club**<br>(return, in km)"
+    title = "**Total distance by club**<br>(return, in km)"
   ) +
   theme_custom()
 
@@ -241,7 +238,7 @@ p2 <- df_distances %>%
   scale_y_continuous(position = "right", breaks = seq(0, 100, 10)) +
   coord_flip() +
   labs(
-    title = "**Shortest distances**<br>between stadiums<br>(oneway, in km)"
+    title = "**Shortest distances**<br>between stadiums (oneway, in km)"
   ) +
   theme_custom()
 
@@ -271,7 +268,7 @@ p3 <- df_distances %>%
   scale_y_continuous(position = "right", minor_breaks = seq(0, 1000, 10)) +
   coord_flip() +
   labs(
-    title = "**Longest distances**<br>between stadiums<br>(oneway, in km)"
+    title = "**Longest distances**<br>between stadiums (oneway, in km)"
   ) +
   theme_custom()
 p3
@@ -282,15 +279,19 @@ p4 + p1 + p2 + p3 +
               111
               111
               234
-              ")
+              ") &
+  plot_annotation(
+    title = "Bundesliga Journeys 2023",
+    caption = "Source: DFB, Wikidata. Visualization: Ansgar Wolsing",
+    theme = theme(
+      text = element_text(color = "white", family = "Source Sans Pro"),
+      plot.title = element_text(
+        hjust = 0.5, size = 28, family = "Source Sans Pro SemiBold",
+        margin = margin(t = 2, b = 8)),
+      plot.background = element_rect(color = bg_color, fill = bg_color)
+    )
+  )
 
-ggsave(here("plots", "07-navigation.png"), width = 8, height = 9, scale = 1.2,
+ggsave(here("plots", "07-navigation.png"), width = 8 / 1.5, height = 9 / 1.5,
+       scale = 1.2 * 1.5,
        bg = bg_color)
-
-
-
-## Histogram of distances
-df_distances %>%
-  ggplot(aes(distance_return / 1000)) +
-  geom_histogram(binwidth = 50)
-
