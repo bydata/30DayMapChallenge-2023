@@ -13,7 +13,6 @@ russia <- giscoR::gisco_get_countries(
   resolution = "20", country = "Russian Federation", epsg = "3857"
 )
 asia <- bind_rows(asia, russia)
-
 glimpse(asia)
 
 
