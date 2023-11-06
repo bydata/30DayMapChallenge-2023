@@ -4,9 +4,15 @@ library(cartogram)
 # devtools::install_github("jimjam-slam/ggflags")
 library(ggflags)
 
+# Get countries from GISCO
 asia <- giscoR::gisco_get_countries(
   resolution = "20", region = "Asia", epsg = "3857"
 )
+# Add Russian Federation
+russia <- giscoR::gisco_get_countries(
+  resolution = "20", country = "Russian Federation", epsg = "3857"
+)
+asia <- bind_rows(asia, russia)
 
 glimpse(asia)
 
@@ -43,7 +49,12 @@ p %>%
     y = st_coordinates(centroid)[, "Y"]
   ) %>%
   arrange(-area) %>%
-  mutate(FID2 = fct_inorder(FID)) %>%
+  mutate(
+    FID2 = fct_inorder(FID),
+    # move Russia
+    x = ifelse(FID == "ru", y - 0.5e6, x),
+    y = ifelse(FID == "ru", y - 2.75e6, y)
+    ) %>%
   ggplot(aes(x, y, size = area)) +
   ggflags::geom_flag(
     aes(country = FID)
@@ -53,7 +64,7 @@ p %>%
   guides(size = "none") +
   labs(
     title = "Asia",
-    subtitle = "The size of the flags indicates the population (2021)",
+    subtitle = "The size of the flags indicates the population of the countries (2021)",
     caption = "Source: GISCO, Worldbank. Visualization: Ansgar Wolsing"
   ) +
   theme_void(base_family = "Source Sans Pro Light") +
@@ -66,4 +77,4 @@ p %>%
     plot.subtitle = element_text(hjust = 0.5, margin = margin(t = 12, b = 40)),
     plot.margin = margin(t = 4, b = 4, l = 40, r = 40)
   )
-ggsave(file.path("plots", "06-asia-dorling-pop.png"), width = 8, height = 7)
+ggsave(file.path("plots", "06-asia-dorling-pop.png"), width = 4, height = 3.5, scale = 2)
