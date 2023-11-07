@@ -271,7 +271,7 @@ p4 <- df_distances %>%
     title = "**Longest distances**<br>between stadiums (oneway, in km)"
   ) +
   theme_custom()
-p3
+
 
 # Combine plots using {patchwork}
 p1 + p2 + p3 + p4 +
