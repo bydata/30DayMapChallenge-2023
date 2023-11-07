@@ -134,7 +134,7 @@ df_plot <- df_distances %>%
 bg_color <- "#0A153B"
 bar_color <- "#74A4BC"
 
-p4 <- df_plot %>%
+p1 <- df_plot %>%
   ggplot() +
   # Map of Germany
   geom_sf(
@@ -195,7 +195,7 @@ theme_custom <- function() {
 
 
 # Distances (return) travelled per club
-p1 <- df_distances_season %>%
+p2 <- df_distances_season %>%
   mutate(clubLabel = fct_reorder(clubLabel, total_distance_return)) %>%
   ggplot(aes(clubLabel, total_distance_return / 1000)) +
   geom_col(fill = bar_color) + #2EC4B6
@@ -213,7 +213,7 @@ p1 <- df_distances_season %>%
   theme_custom()
 
 # Shortest distances between venues
-p2 <- df_distances %>%
+p3 <- df_distances %>%
   mutate(
     clubLabel_short.x = bundesliga_clubs_shortname[clubLabel.x],
     clubLabel_short.y = bundesliga_clubs_shortname[clubLabel.y],
@@ -243,7 +243,7 @@ p2 <- df_distances %>%
   theme_custom()
 
 # Longest distances between venues
-p3 <- df_distances %>%
+p4 <- df_distances %>%
   mutate(
     clubLabel_short.x = bundesliga_clubs_shortname[clubLabel.x],
     clubLabel_short.y = bundesliga_clubs_shortname[clubLabel.y],
@@ -274,7 +274,7 @@ p3 <- df_distances %>%
 p3
 
 # Combine plots using {patchwork}
-p4 + p1 + p2 + p3 +
+p1 + p2 + p3 + p4 +
   plot_layout(design = "
               111
               111
@@ -287,7 +287,7 @@ p4 + p1 + p2 + p3 +
       text = element_text(color = "white", family = "Source Sans Pro"),
       plot.title = element_text(
         hjust = 0.5, size = 28, family = "Source Sans Pro SemiBold",
-        margin = margin(t = 2, b = 8)),
+        margin = margin(t = 4, b = 6)),
       plot.background = element_rect(color = bg_color, fill = bg_color)
     )
   )
