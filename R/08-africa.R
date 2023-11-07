@@ -59,12 +59,12 @@ layer_data(p, 1) %>%
   ggflags::geom_flag(
     aes(country = FID)
   ) +
-  scale_size_area(max_size = 46) +
+  scale_size_area(max_size = 50) +
   coord_cartesian(clip = "off") +
   guides(size = "none") +
   labs(
     title = "Africa",
-    subtitle = "The size of the flags indicates the population (2021)",
+    subtitle = "The size of the flags indicates the population of the countries (2021)",
     caption = "Source: GISCO, Worldbank. Visualization: Ansgar Wolsing"
   ) +
   theme_void(base_family = "Source Sans Pro Light") +
@@ -75,6 +75,8 @@ layer_data(p, 1) %>%
       hjust = 0.5, size = 36, family = "Playfair Display", face = "italic",
       color = "grey99"),
     plot.subtitle = element_text(hjust = 0.5, margin = margin(t = 12, b = 40)),
+    plot.caption = element_text(margin = margin(t = 16)),
     plot.margin = margin(t = 4, b = 4, l = 40, r = 40)
   )
-ggsave(file.path("plots", "08-africa-dorling-pop.png"), width = 8, height = 7)
+ggsave(file.path("plots", "08-africa-dorling-pop.png"), width = 4, height = 4,
+       scale = 2)
