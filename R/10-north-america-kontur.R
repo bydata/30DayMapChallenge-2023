@@ -75,7 +75,7 @@ create_magnifying_inset <- function(coords, name, dist = 100000) {
     ggplot() +
     geom_sf(
       data = area_buffer,
-      color = "grey10", linewidth = 0.5, fill = "grey93"
+      color = "grey10", linewidth = 0.3, fill = "grey93"
     ) +
     geom_sf(aes(fill = population), linewidth = 1e-4, color = "white") +
     scale_fill_viridis_c(breaks = c(10, 100, 1000, 5000, 15000),
@@ -128,10 +128,10 @@ p_inset_edmonton <- create_magnifying_inset(coords_edmonton, "Edmonton")
 p_combined <- p +
   inset_element(p_inset_vancouver, left = 0, bottom = -0.025, right = 0.25,
                 top = 0.175, align_to = "full") +
-  inset_element(p_inset_toronto, left = 0.75, bottom = 0.35, right = 1,
-                top = 0.6, align_to = "full") +
-  inset_element(p_inset_montreal, left = 0.75, bottom = 0.55, right = 1,
-                top = 0.80, align_to = "full") +
+  inset_element(p_inset_toronto, left = 0.75, bottom = 0.4, right = 1,
+                top = 0.65, align_to = "full") +
+  inset_element(p_inset_montreal, left = 0.75, bottom = 0.6, right = 1,
+                top = 0.85, align_to = "full") +
   inset_element(p_inset_edmonton, left = 0.35, bottom = 0.25, right = 0.6,
                 top = 0.5, align_to = "full")
 ggsave(here("plots", "10-north-america-ca-pop-density-with-inset.png"), dpi = 600,
