@@ -180,3 +180,20 @@ ggplot() +
     legend.text = element_text(size = 7)
   )
 ggsave(here("plots", "04-bad-with-pop-share.png"), width = 4.8, height = 5.8)
+
+
+bad_places %>%
+  filter(admin1_code == "02") %>%
+  st_filter(st_as_sfc(st_bbox(c(xmin = 12.5, ymin = 48, xmax = 14, ymax = 48.8),
+                      crs = st_crs(bad_places)))) %>%
+  mutate(
+    coords = st_coordinates(geometry),
+    x = coords[, "X"],
+    y = coords[, "Y"]) %>%
+  ggplot() +
+  geom_sf() +
+  ggrepel::geom_text_repel(
+    aes(x, y, label = name),
+    min.segment.length = 0) +
+  coord_sf(xlim = c(12.2, 14), ylim = c(48.2, 48.8))
+
