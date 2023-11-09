@@ -56,7 +56,7 @@ p <- ggplot(kontur) +
     per cell.",
     caption = "Data: Kontur Population Dataset (Release 2023-11-01).
     Visualization: Ansgar Wolsing",
-    fill = "Population"
+    fill = "Population (log)"
   )
 # ggsave(here("plots", "10-north-america-ca-pop-density.png"), dpi = 200,
 #        width = 4, height = 4, scale = 2)
@@ -64,7 +64,7 @@ p <- ggplot(kontur) +
 
 # Create insets / magnifying glass -----------------------
 
-create_magnifying_inset <- function(coords, name, dist = 75000) {
+create_magnifying_inset <- function(coords, name, dist = 60000) {
   st_crs(coords) <- "EPSG:4326"
   area_buffer <- st_buffer(coords, dist = dist)
 
@@ -91,8 +91,8 @@ create_magnifying_inset <- function(coords, name, dist = 75000) {
 }
 
 # Create insets for the 4 largest cities
-coords_vancouver <- st_geometry(st_point(c(-123.0, 49.3)))
-coords_toronto <- st_geometry(st_point(c(-80.0, 43.7)))
+coords_vancouver <- st_geometry(st_point(c(-122.9, 49.3)))
+coords_toronto <- st_geometry(st_point(c(-79.8, 43.7)))
 coords_montreal <- st_geometry(st_point(c(-73.9, 45.6)))
 coords_edmonton <- st_geometry(st_point(c(-113.8, 53.5)))
 
@@ -101,15 +101,8 @@ p_inset_toronto <- create_magnifying_inset(coords_toronto, "Toronto")
 p_inset_montreal <- create_magnifying_inset(coords_montreal, "Montréal")
 p_inset_edmonton <- create_magnifying_inset(coords_edmonton, "Edmonton")
 
-# p_combined <- p +
-#   inset_element(p_inset_vancouver, left = 0, bottom = -0.015, right = 0.25,
-#                 top = 0.185, align_to = "full") +
-#   inset_element(p_inset_toronto, left = 0.75, bottom = 0.4, right = 1,
-#                 top = 0.60, align_to = "full") +
-#   inset_element(p_inset_montreal, left = 0.75, bottom = 0.6, right = 1,
-#                 top = 0.80, align_to = "full") +
-#   inset_element(p_inset_edmonton, left = 0.35, bottom = 0.25, right = 0.6,
-#                 top = 0.5, align_to = "full")
+
+# Add the insets on the map
 p_combined <- p +
   inset_element(p_inset_vancouver, left = 0, bottom = 0, right = 0.20,
                 top = 0.20, align_to = "full") +
