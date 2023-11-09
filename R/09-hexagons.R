@@ -126,8 +126,10 @@ p <- grid_flaechennutzung_agg %>%
   guides(fill = guide_colorbar(title.position = "top")) +
   labs(
     title = "Land Use in Germany",
-    subtitle = "Share of different types of land use in a grid of hexagons",
-    caption = "Source: Regionalatlas, Statistisches Bundesamt (2015).
+    subtitle = "Share of different types of land use in a grid of hexagons.",
+    caption = "The original data is on municipality level (\"Gemeinden\"), except for
+    Saxony which is on district level (\"Kreise\").<br>
+    Source: Regionalatlas, Statistisches Bundesamt (2015).
     Visualization: Ansgar Wolsing",
     fill = "Share of land use"
   ) +
@@ -140,7 +142,7 @@ p <- grid_flaechennutzung_agg %>%
     legend.text = element_text(size = 7),
     legend.key.height = unit(2, "mm"),
     legend.key.width = unit(8, "mm"),
-    text = element_text(color = "grey20"),
+    text = element_text(color = "grey20", lineheight = 1.1),
     plot.title = element_text(family = "Outfit Semibold", hjust = 0.5),
     plot.subtitle = element_text(
       hjust = 0.5, margin = margin(t = 4, b = 12)),
