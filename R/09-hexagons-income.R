@@ -93,7 +93,7 @@ p <- grid_einkuenfte_agg %>%
     caption = "The original data is on municipality level (\"Gemeinden\")<br>
     Source: Regionalatlas, Statistisches Bundesamt (2015).
     Visualization: Ansgar Wolsing",
-    fill = "\U00D8 taxable income (in kEUR)"
+    fill = "\U00D8 taxable income (in kEUR, log)"
   ) +
   theme_void(base_family = "Outfit", base_size = 10) +
   theme(
