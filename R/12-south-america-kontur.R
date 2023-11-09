@@ -45,11 +45,8 @@ p <- ggplot(kontur) +
     color = "grey40", fill = "grey15", linewidth = 0.1
   ) +
   geom_sf(aes(fill = population), linewidth = 1e-4, color = "white") +
-  # scale_fill_viridis_c(breaks = c(10, 100, 1000, 5000, 20000),
-  #                      labels = scales::number_format(), direction = 1,
-  #                      trans = "pseudo_log", option = "plasma") +
   colorspace::scale_fill_continuous_sequential(
-    palette = "YlGnBu", breaks = c(10, 100, 1000, 5000, 20000),
+    palette = "YlGnBu", breaks = c(10, 100, 1000, 5000, 20000), rev = FALSE,
     labels = scales::number_format(), trans = "log") +
   coord_sf(xlim = c(st_bbox(kontur)["xmin"] - 2e5, st_bbox(kontur)["xmax"] + 2e5)) +
   labs(
