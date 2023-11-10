@@ -39,12 +39,69 @@ custom_theme <- function() {
 theme_set(custom_theme())
 
 
+# Functions for custom annotations
+annotate_text <- function(hjust = 0,...) {
+  annotate(
+    "richtext",
+    lineheight = 1.05, vjust = 0.5, color = "white", family = "Fira Sans",
+    hjust = hjust, fill = NA, label.size = 0, size = 3.5,
+    ...)
+}
+
+annotate_segment <- function(...) {
+  annotate(
+    GeomSegment,
+    ..., linewidth = 0.5, color = "white"
+  )
+}
+
+
+# Transform coordinates --------------------------------------------------------
+
+transform_coordinates <- function(lon, lat, crs_in = "EPSG:4326", crs_out = st_crs(kontur)) {
+  st_point(c(lon, lat)) %>%
+    st_geometry() %>%
+    st_sf(crs = crs_in) %>%
+    st_transform(crs = crs_out)
+}
+
+# Rio
+transform_coordinates(-43.205556, -22.911111)
+# Sao Paulo
+transform_coordinates(-46.633333, -23.55)
+# Brasília
+transform_coordinates(-47.882778, -15.793889)
+# Fortaleza
+transform_coordinates(-38.5275, -3.7275)
+
+# Population figures: https://en.wikipedia.org/wiki/List_of_cities_in_Brazil_by_population
+
 p <- ggplot(kontur) +
   geom_sf(
     data = shp,
     color = "grey40", fill = "grey15", linewidth = 0.1
   ) +
-  geom_sf(aes(fill = population), linewidth = 1e-4, color = "white") +
+  geom_sf(aes(fill = population), linewidth = 0, color = "white") +
+  # Rio de Janeiro: -43.205556, -22.911111 // 6,211,423
+  annotate_text(
+    label = "**Rio de Janeiro**<br>pop. 6,211,000",
+    x = -4.2e6, y = -2621273) +
+  annotate_segment(x = -4.2e6, xend = -4.8e6, y = -2621273, yend = -2621273) +
+  # Sao Paulo: -23.55,-46.633333 // 11,451,245
+  annotate_text(
+    label = "**Sao Paulo**<br>pop. 11,451,000",
+    x = -4.2e6, y = -2.98e6) +
+  annotate_segment(x = -4.2e6, xend = -5.15e6, y = -2.98e6, yend = -2.7e6) +
+  # Brasília: 15.793889,-47.882778 // 2,817,068
+  annotate_text(
+    label = "**Brasília**<br>pop. 2,817,000",
+    x = -4.2e6, y = -1780866) +
+  annotate_segment(x = -4.2e6, xend = -5.3e6, y = -1780866, yend = -1780866) +
+  # Fortaleza: -3.7275, -38.5275 // 2,428,678
+  annotate_text(
+    label = "**Fortaleza**<br>pop. 2,428,000",
+    x = -4.2e6, y = -3.1e5) +
+  annotate_segment(x = -4.2e6, xend = -4288862, y = -3.1e5, yend = -415236.4) +
   colorspace::scale_fill_continuous_sequential(
     palette = "YlGnBu", breaks = c(10, 100, 1000, 5000, 20000), rev = FALSE,
     labels = scales::number_format(), trans = "log") +
@@ -54,60 +111,9 @@ p <- ggplot(kontur) +
     subtitle = "400m hexagon population grid. Values represent number of people
     per cell.",
     caption = "Data: Kontur Population Dataset (Release 2023-11-01).
+    Population figures from the 2022 IBGE Census.
     Visualization: Ansgar Wolsing",
     fill = "Population (log)"
   )
 ggsave(here("plots", "12-south-america-br-pop-density.png"), dpi = 200,
        width = 4, height = 4, scale = 2)
-
-
-# Create insets / magnifying glass -----------------------
-
-create_magnifying_inset <- function(coords, name, dist = 75000) {
-  st_crs(coords) <- "EPSG:4326"
-  area_buffer <- st_buffer(coords, dist = dist)
-
-  kontur_area_buffer <- kontur %>%
-    st_filter(st_transform(area_buffer, crs = st_crs(.)), .predicate = st_within)
-
-  p_inset <- kontur_area_buffer %>%
-    ggplot() +
-    geom_sf(
-      data = area_buffer,
-      color = "grey10", linewidth = 0.3, fill = "grey93"
-    ) +
-    geom_sf(aes(fill = population), linewidth = 0, color = NA) +
-    scale_fill_viridis_c(breaks = c(10, 100, 1000, 5000, 20000),
-                         labels = scales::number_format(), direction = 1,
-                         trans = "pseudo_log", option = "plasma") +
-    guides(fill = "none") +
-    labs(title = name) +
-    theme(
-      plot.background = element_rect(color = NA, fill = NA),
-      plot.title = element_text(size = 10)
-    )
-  p_inset
-}
-
-# Create insets for the 4 largest cities
-coords_vancouver <- st_geometry(st_point(c(-123.0, 49.3)))
-coords_toronto <- st_geometry(st_point(c(-80.0, 43.7)))
-coords_montreal <- st_geometry(st_point(c(-73.9, 45.6)))
-coords_edmonton <- st_geometry(st_point(c(-113.8, 53.5)))
-
-p_inset_vancouver <- create_magnifying_inset(coords_vancouver, "Vancouver")
-p_inset_toronto <- create_magnifying_inset(coords_toronto, "Toronto")
-p_inset_montreal <- create_magnifying_inset(coords_montreal, "Montréal")
-p_inset_edmonton <- create_magnifying_inset(coords_edmonton, "Edmonton")
-
-p_combined <- p +
-  inset_element(p_inset_vancouver, left = 0, bottom = -0.015, right = 0.25,
-                top = 0.185, align_to = "full") +
-  inset_element(p_inset_toronto, left = 0.75, bottom = 0.4, right = 1,
-                top = 0.60, align_to = "full") +
-  inset_element(p_inset_montreal, left = 0.75, bottom = 0.6, right = 1,
-                top = 0.80, align_to = "full") +
-  inset_element(p_inset_edmonton, left = 0.35, bottom = 0.25, right = 0.6,
-                top = 0.5, align_to = "full")
-ggsave(here("plots", "10-north-america-ca-pop-density-with-inset.png"), dpi = 600,
-       width = 5, height = 5, scale = 2)
