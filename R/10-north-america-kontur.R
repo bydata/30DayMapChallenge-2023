@@ -39,13 +39,12 @@ custom_theme <- function() {
 }
 theme_set(custom_theme())
 
-
-p <- ggplot(kontur) +
+# Base map without population density data
+p_base <- ggplot() +
   geom_sf(
     data = shp,
     color = "grey20", fill = "grey80", linewidth = 0.1
   ) +
-  geom_sf(aes(fill = population), linewidth = 1e-4, color = "white") +
   scale_fill_viridis_c(breaks = c(10, 100, 1000, 5000, 20000),
                        labels = scales::number_format(), direction = 1,
                        trans = "pseudo_log", option = "plasma") +
@@ -58,8 +57,41 @@ p <- ggplot(kontur) +
     Visualization: Ansgar Wolsing",
     fill = "Population (log)"
   )
-# ggsave(here("plots", "10-north-america-ca-pop-density.png"), dpi = 200,
-#        width = 4, height = 4, scale = 2)
+
+
+# Add arrows for the insets to be added later ----------------------------------
+
+# Locations of the largest cities
+coords_vancouver <- st_geometry(st_point(c(-122.9, 49.3)))
+coords_toronto <- st_geometry(st_point(c(-79.8, 43.7)))
+coords_montreal <- st_geometry(st_point(c(-73.9, 45.6)))
+coords_calgary <- st_geometry(st_point(c(-114.1, 51.05)))
+coords_edmonton <- st_geometry(st_point(c(-113.8, 53.5)))
+
+cities_df <- data.frame(geometry = c(coords_vancouver, coords_toronto, coords_montreal,
+                                  coords_calgary)) %>%
+  st_as_sf(crs = "EPSG:4326") %>%
+  st_transform(crs = st_crs(shp))
+
+# arrows_df <- data.frame(
+#   # x = c(),
+#   xend = st_coordinates(cities_df)[, "X"],
+#   # y = c(),
+#   yend = st_coordinates(cities_df)[, "Y"]
+# )
+
+p_base +
+  geom_sf(
+    data = cities_df)
+
+
+
+# Add population density data to the map
+p_density <- p_base +
+  geom_sf(
+    data = kontur,
+    aes(fill = population),
+    linewidth = 1e-4, color = "white")
 
 
 # Create insets / magnifying glass -----------------------
@@ -90,27 +122,24 @@ create_magnifying_inset <- function(coords, name, dist = 60000) {
   p_inset
 }
 
-# Create insets for the 4 largest cities
-coords_vancouver <- st_geometry(st_point(c(-122.9, 49.3)))
-coords_toronto <- st_geometry(st_point(c(-79.8, 43.7)))
-coords_montreal <- st_geometry(st_point(c(-73.9, 45.6)))
-coords_edmonton <- st_geometry(st_point(c(-113.8, 53.5)))
+# Create insets for the largest cities
 
 p_inset_vancouver <- create_magnifying_inset(coords_vancouver, "Vancouver")
 p_inset_toronto <- create_magnifying_inset(coords_toronto, "Toronto")
 p_inset_montreal <- create_magnifying_inset(coords_montreal, "Montréal")
-p_inset_edmonton <- create_magnifying_inset(coords_edmonton, "Edmonton")
+p_inset_calgary <- create_magnifying_inset(coords_calgary, "Calgary")
+# p_inset_edmonton <- create_magnifying_inset(coords_edmonton, "Edmonton")
 
 
 # Add the insets on the map
-p_combined <- p +
+p_combined <- p_density +
   inset_element(p_inset_vancouver, left = 0, bottom = 0, right = 0.20,
                 top = 0.20, align_to = "full") +
-  inset_element(p_inset_toronto, left = 0.75, bottom = 0.425, right = 0.95,
+  inset_element(p_inset_montreal, left = 0.75, bottom = 0.425, right = 0.95,
                 top = 0.625, align_to = "full") +
-  inset_element(p_inset_montreal, left = 0.75, bottom = 0.60, right = 0.95,
+  inset_element(p_inset_toronto, left = 0.75, bottom = 0.60, right = 0.95,
                 top = 0.80, align_to = "full") +
-  inset_element(p_inset_edmonton, left = 0.34, bottom = 0.22, right = 0.54,
+  inset_element(p_inset_calgary, left = 0.34, bottom = 0.22, right = 0.54,
                 top = 0.42, align_to = "full")
-ggsave(here("plots", "10-north-america-ca-pop-density-with-inset.png"), dpi = 600,
+ggsave(here("plots", "10-north-america-ca-pop-density-with-inset.png"), dpi = 400,
        width = 5, height = 5, scale = 2)
