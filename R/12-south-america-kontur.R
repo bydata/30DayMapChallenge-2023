@@ -4,17 +4,26 @@ library(ggtext)
 library(patchwork)
 library(here)
 
+# Map projection: Brazil polyconic: EPSG:5880
+crs <- "EPSG:5880"
+
 # KONTUR Datasets (2023-11-01)
 #' Brazil: https://data.humdata.org/dataset/kontur-population-canada
 kontur <- st_read(here("data", "kontur_population_BR_20231101.gpkg"))
+
 st_crs(kontur)
 st_bbox(kontur)
+kontur <- st_transform(kontur, crs = crs)
+st_bbox(kontur)
+
 
 # Country shape
 shp <- giscoR::gisco_get_countries(country = "Brazil", epsg = "3857")
+shp <- st_transform(shp, crs = crs)
 
 # Americas shape
 shp_americas <- giscoR::gisco_get_countries(region = "Americas", epsg = "3857")
+shp_americas <- st_transform(shp_americas, crs = crs)
 
 # Functions for custom annotations
 annotate_text <- function(hjust = 0,...) {
@@ -53,6 +62,9 @@ transform_coordinates(-38.5275, -3.7275)
 
 # Population figures: https://en.wikipedia.org/wiki/List_of_cities_in_Brazil_by_population
 
+
+# Map --------------------------------------------------------------------------
+
 p <- ggplot(kontur) +
   geom_sf(
     data = shp_americas,
@@ -66,23 +78,23 @@ p <- ggplot(kontur) +
   # Rio de Janeiro: -43.205556, -22.911111 // 6,211,423
   annotate_text(
     label = "**Rio de Janeiro**<br>pop. 6,211,000",
-    x = -4.2e6, y = -2621273) +
-  annotate_segment(x = -4.2e6, xend = -4.8e6, y = -2621273, yend = -2621273) +
+    x = 7.1e6, y = 7424714) +
+  annotate_segment(x = 7.1e6, xend = 6.18e6, y = 7424714, yend = 7424714) +
   # Sao Paulo: -23.55,-46.633333 // 11,451,245
   annotate_text(
     label = "**Sao Paulo**<br>pop. 11,451,000",
-    x = -4.2e6, y = -2.98e6) +
-  annotate_segment(x = -4.2e6, xend = -5.15e6, y = -2.98e6, yend = -2.7e6) +
+    x = 7.1e6, y = 7e6) +
+  annotate_segment(x = 7.1e6, xend = 5.8e6, y = 7e6, yend = 7375236) +
   # Brasília: 15.793889,-47.882778 // 2,817,068
   annotate_text(
     label = "**Brasília**<br>pop. 2,817,000",
-    x = -4.2e6, y = -1780866) +
-  annotate_segment(x = -4.2e6, xend = -5.3e6, y = -1780866, yend = -1780866) +
+    x = 7.1e6, y = 8243642) +
+  annotate_segment(x = 7.1e6, xend = 5.7e6, y = 8243642, yend = 8243642) +
   # Fortaleza: -3.7275, -38.5275 // 2,428,678
   annotate_text(
     label = "**Fortaleza**<br>pop. 2,428,000",
-    x = -4.2e6, y = -3.1e5) +
-  annotate_segment(x = -4.2e6, xend = -4288862, y = -3.1e5, yend = -415236.4) +
+    x = 7.1e6, y = 9572742) +
+  annotate_segment(x = 7.1e6, xend = 6.7e6, y = 9572742, yend = 9572742) +
   colorspace::scale_fill_continuous_sequential(
     palette = "YlGnBu", breaks = c(10, 100, 1000, 5000, 20000), rev = FALSE,
     labels = scales::number_format(), trans = "log") +
@@ -93,8 +105,8 @@ p <- ggplot(kontur) +
     title = "Brazil Population Density",
     subtitle = "400m hexagon population grid. Values represent number of people
     per cell.",
-    caption = "Data: Kontur Population Dataset (Release 2023-11-01).
-    Population figures from the 2022 IBGE Census.
+    caption = "Data: Kontur Population Dataset (Release 2023-11-01),
+    IBGE Census (2022).
     Visualization: Ansgar Wolsing",
     fill = "Population<br>*(log)*"
   ) +
@@ -115,7 +127,7 @@ p <- ggplot(kontur) +
     legend.text = element_markdown(size = 8),
     plot.margin = margin(c(t = 2, b = 0, l = 10, r = 10))
   )
-ggsave(here("plots", "12-south-america-br-pop-density-hi.png"), dpi = 500,
-       width = 4, height = 4, scale = 2)
 ggsave(here("plots", "12-south-america-br-pop-density-lo.png"), dpi = 200,
+       width = 4, height = 4, scale = 2)
+ggsave(here("plots", "12-south-america-br-pop-density-hi.png"), dpi = 500,
        width = 4, height = 4, scale = 2)
