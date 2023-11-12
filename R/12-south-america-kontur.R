@@ -75,16 +75,16 @@ p <- ggplot(kontur) +
     color = "grey40", fill = "grey14", linewidth = 0.2
   ) +
   geom_sf(aes(fill = population), linewidth = 0, color = "white") +
+  # São Paulo: -23.55,-46.633333 // 11,451,245
+  annotate_text(
+    label = "**São Paulo**<br>pop. 11,451,000",
+    x = 5.6e6, y = 6.75e6) +
+  annotate_segment(x = 5751824, xend = 5751824, y = 6.9e6, yend = 7.32e6) +
   # Rio de Janeiro: -43.205556, -22.911111 // 6,211,423
   annotate_text(
     label = "**Rio de Janeiro**<br>pop. 6,211,000",
     x = 7.1e6, y = 7424714) +
   annotate_segment(x = 7.1e6, xend = 6.18e6, y = 7424714, yend = 7424714) +
-  # Sao Paulo: -23.55,-46.633333 // 11,451,245
-  annotate_text(
-    label = "**Sao Paulo**<br>pop. 11,451,000",
-    x = 7.1e6, y = 7e6) +
-  annotate_segment(x = 7.1e6, xend = 5.8e6, y = 7e6, yend = 7375236) +
   # Brasília: 15.793889,-47.882778 // 2,817,068
   annotate_text(
     label = "**Brasília**<br>pop. 2,817,000",
