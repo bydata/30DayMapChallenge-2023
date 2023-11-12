@@ -61,16 +61,28 @@ layer_data(p, 1) %>%
       "el" ~ "gr",
        .default = FID
     )
-  ) %>% # View()
-  # slice_head(n = 12) %>%
-  # move Russia to the West
-  mutate(x = ifelse(FID == "ru", x - 6e6, x)) %>%
+  ) %>%
+  # move Russia to the West & slightly South
+  mutate(
+    x = ifelse(FID == "ru", x - 6.8e6, x),
+    y = ifelse(FID == "ru", y - 0.75e6, y)
+    ) %>%
+  # switch Slovenia and Austria, move Liechtenstein slightly West
+  mutate(
+    x = case_match(
+      FID,
+      "si" ~ x[FID == "at"],
+      "at" ~ x[FID == "si"] + 0.67e5,
+      "li" ~ x - 0.2e5,
+      .default = x
+      ),
+    y = y + ifelse(FID == "at", 0.2e6, 0)
+  ) %>%
   ggplot(aes(x, y, size = area)) +
   ggflags::geom_flag(
     aes(country = FID)
   ) +
-  # geom_text(aes(label = FID), size = 3) +
-  scale_size_area(max_size = 50) +
+  scale_size_area(max_size = 55) +
   coord_cartesian(clip = "off") +
   guides(size = "none") +
   labs(
@@ -86,6 +98,7 @@ layer_data(p, 1) %>%
       hjust = 0.5, size = 36, family = "Playfair Display", face = "italic",
       color = "grey99"),
     plot.subtitle = element_text(hjust = 0.5, margin = margin(t = 12, b = 40)),
-    plot.margin = margin(t = 4, b = 4, l = 40, r = 40)
+    plot.margin = margin(t = 4, b = 4, l = 20, r = 60)
   )
-ggsave(file.path("plots", "14-europe-dorling-pop.png"), width = 9, height = 7)
+ggsave(file.path("plots", "14-europe-dorling-pop.png"), width = 4, height = 4,
+       scale = 2)
