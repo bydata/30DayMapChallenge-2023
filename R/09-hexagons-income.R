@@ -61,15 +61,15 @@ ggplot(grid_de) + geom_sf()
 # Join the spacial objects by the centroid location
 cent_grid <- st_centroid(grid_de)
 cent_merge <- st_join(cent_grid, einkuenfte_df, left = FALSE)
-grid_flaechennutzung <- st_join(
+grid_einkuenfte <- st_join(
   grid_de, st_transform(einkuenfte_df, st_crs(grid_de)),
   join = st_intersects)
 
 # Aggregate values based on index and nutzungstyp
 grid_einkuenfte_agg <- aggregate(
-  select(grid_flaechennutzung, -c(id, idx)),
+  select(grid_einkuenfte, -c(id, idx)),
   # keep the land use type in the grouping
-  by = list(idx = grid_flaechennutzung$idx),
+  by = list(idx = grid_einkuenfte$idx),
   FUN = mean,
   na.rm = TRUE,
   do_union = FALSE
@@ -89,9 +89,9 @@ p <- grid_einkuenfte_agg %>%
   guides(fill = guide_colorbar(title.position = "top")) +
   labs(
     title = "Taxable Income in Germany",
-    subtitle = "Average total amount of taxable income per taxpayer<br>in a grid of hexagons.",
+    subtitle = "Average total amount of taxable income per taxpayer<br>in a hexagon grid.",
     caption = "The original data is on municipality level (\"Gemeinden\")<br>
-    Source: Regionalatlas, Statistisches Bundesamt (2015).
+    Source: Regionalatlas, Statistisches Bundesamt (2018).
     Visualization: Ansgar Wolsing",
     fill = "\U00D8 taxable income (in kEUR, log)"
   ) +
