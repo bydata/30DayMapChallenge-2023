@@ -102,7 +102,7 @@ regions_valued %>%
     plot.background = element_rect(color = "white", fill = "white"),
     plot.title = element_markdown(family = "guanine"),
     plot.margin = margin(rep(4, 4)),
-    legend.position = c(0.305, 0.27),
+    legend.position = c(0.305, 0.23),
     legend.direction = "horizontal"
   )
 ggsave(here("plots", "11-retro.png"), width = 4, height = 4, scale = 1.8)
