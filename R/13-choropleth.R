@@ -32,8 +32,7 @@ df <- df_raw %>%
       .default = AGS
     ),
     geb_gest_ratio = lebendgeborene / gestorbene,
-    geb_gest_ratio_log2 = log(geb_gest_ratio, 2),
-    geb_gest_perc = (lebendgeborene - gestorbene) / gestorbene
+    gest_geb_ratio = gestorbene / lebendgeborene
     ) %>%
   na.omit() %>%
   arrange(AGS)
@@ -51,9 +50,12 @@ shp %>%
     aes(fill = geb_gest_ratio),
     linewidth = 0.00025, color = NA) +
   scale_fill_gradient2(
-    midpoint = 1, breaks = seq(0.5, 1.25, 0.25),
-    labels = c("Twice more **deaths**", "33 % more deaths",
-               "**Same** number of<br>births and deaths", "25 % more **births**")) +
+    midpoint = 1,
+    # breaks = seq(0.5, 1.25, 0.25),
+    breaks = c(1/3, 1/2, 2/3, 4/5, 1, 5/4),
+    labels = c("3 times more **deaths**", "Twice more deaths", "50 % more deaths", "25 % more deaths",
+               "**Same** number of<br>births and deaths", "25 % more **births**")
+    ) +
   labs(
     title = "In 387 of Germany's 400 districts more people die than babies are born",
     subtitle = "Ratio of births and deaths in the districts Germany<br>
@@ -66,9 +68,10 @@ shp %>%
   theme(
     plot.background = element_rect(color = "grey98", fill = "grey98"),
     legend.text = element_markdown(),
-    legend.position = c(1.035, 0.35),
+    legend.position = c(1.08, 0.34),
     legend.direction = "vertical",
-    legend.key.width = unit(0.5, "cm"),
+    legend.key.width = unit(0.33, "cm"),
+    legend.key.height = unit(0.75, "cm"),
     plot.title = element_markdown(family = "Source Sans Pro Semibold", hjust = 0.5),
     plot.subtitle = element_markdown(hjust = 0.5, lineheight = 1),
     plot.caption = element_markdown(hjust = 0.5, lineheight = 1),
