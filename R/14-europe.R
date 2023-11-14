@@ -87,7 +87,7 @@ layer_data(p, 1) %>%
   guides(size = "none") +
   labs(
     title = "Europe",
-    subtitle = "The size of the flags indicates the population (2021)",
+    subtitle = "The size of the flags indicates the population of the countries (2021)",
     caption = "Source: GISCO, Worldbank. Visualization: Ansgar Wolsing"
   ) +
   theme_void(base_family = "Source Sans Pro Light") +
@@ -101,4 +101,4 @@ layer_data(p, 1) %>%
     plot.margin = margin(t = 4, b = 4, l = 20, r = 60)
   )
 ggsave(file.path("plots", "14-europe-dorling-pop.png"), width = 4, height = 4,
-       scale = 2)
+       scale = 2, dpi = 500)
