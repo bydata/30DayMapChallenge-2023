@@ -4,29 +4,22 @@ library(osmdata)
 library(ggtext)
 library(here)
 
-## Get shape of Germany
+# Get shape of Germany
 shp <- giscoR::gisco_get_countries(country = "Germany")
 st_crs(shp)
 st_bbox(shp)
 
-# bbox <- st_bbox(c(xmin = 5.87709, ymin = 47.27011, xmax = 11, ymax = 53))
+# Pull OSM data in chunks ------------------------------------------------------
 
-# # Get railway features
-# features <- opq(bbox = st_bbox(shp), timeout = 1200) %>%
-# # features <- opq(bbox = bbox, timeout = 1200) %>%
-#   add_osm_feature(key = "railway", value = "rail") %>%
-#   osmdata_sf(quiet = FALSE)
-# write_rds(features, here("output", "railway-de-features.rds"))
-
-
+# Split bounding box into sections
 bbox_sf <- st_as_sfc(st_bbox(shp)) %>%
   st_transform(crs = 32632)
-
 bbox_grid <- st_make_grid(bbox_sf, n = 3)
 bbox_mat <- do.call("rbind", lapply(bbox_grid %>% st_transform(4326), st_bbox))
 bbox_mat
 bbox_mat[1, ]
 
+# Retrieve features by section
 features <- vector("list", nrow(bbox_mat))
 for (i in seq_len(nrow(bbox_mat))) {
   message(bbox_mat[i, ])
@@ -79,7 +72,6 @@ features_lines_combined %>%
   st_drop_geometry() %>%
   count(usage_main)
 
-
 # Intersect with country shape
 features_lines_combined_filtered <- features_lines_combined %>%
   st_filter(shp, .predicate = st_intersects)
@@ -110,21 +102,13 @@ distances <- st_distance(features_lines_combined_filtered, cities_df)
 # Shortest distance
 features_lines_combined_filtered$distance <- apply(distances, 1, min)
 
-ggplot() +
-  geom_sf(
-    data = features_lines_combined_filtered,
-    aes(color = distance)
-  ) +
-  geom_sf(
-    data = cities_df
-  )
 
+# Map --------------------------------------------------------------------------
 
 p <- features_lines_combined_filtered %>%
   ggplot() +
   geom_sf(
-    aes(color = distance, linewidth = ifelse(usage_main, 0.33, 0.2)),
-    # linewidth = 0.25,
+    aes(color = distance, linewidth = ifelse(usage_main, 0.33, 0.2))
   ) +
   geom_sf(
     data = cities_df,
