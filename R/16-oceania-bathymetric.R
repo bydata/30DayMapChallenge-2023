@@ -37,11 +37,12 @@ plot(bathy, image = TRUE,
 points(142.591667, 11.373333, col = "#faec2a", cex = 0.8, pch = 15)
 text(139.8, 11.85, "Challenger Deep", col = "#faec2a", cex = 1.25)
 # Add scale
-scaleBathy(bathy, deg = 2, x = "bottomright", inset = 5, family = "Outfit",
+scaleBathy(bathy, deg = 2, x = "bottomright", inset = 9, family = "Outfit",
            cex = 1)
+# Subtitle & caption
 mtext("The Mariana Trench is the deepest part of the world's oceans,
 reaching a maximum known depth of about 10,994 meters
 in the Challenger Deep.", side = 1, line = 4, cex = 0.67, adj = 0.5)
-mtext("Source: NOAA National Centers for Environmental Information. 2022.
-      Visualization: Ansgar Wolsing", side = 1, line = 6, cex = 0.3)
+mtext("Source: NOAA National Centers for Environmental Information (2022). Visualization: Ansgar Wolsing",
+      side = 1, line = 6.5, cex = 0.42)
 dev.off()
