@@ -16,8 +16,8 @@ blues <- colorRampPalette(c("#eb348f", "#3609ba", "#0f2aa3", "#74add1", "#ffffff
 
 # Plot bathymetric map
 ragg::agg_png(here("plots", "16-oceania-mariana-trench.png"),
-              width = 5, height = 5, units = "in", res = 600)
-par(family = "Outfit")
+              width = 4, height = 4, units = "in", res = 600)
+par(family = "Outfit", cex = 0.5, mar = c(8, 2, 4.5, 2) + 0.1)
 plot(bathy, image = TRUE,
      land = TRUE,
      bpal = list(
@@ -30,18 +30,18 @@ plot(bathy, image = TRUE,
      lwd = c(0.1, 0.1, 0.3), lty = c(1, 1, 1),
      col = c("lightblue", "grey73", "black"),
      drawlabel = c(TRUE, TRUE, FALSE),
-     axes = FALSE, xlab = "", ylab = "",
-     main = "Mariana Trench"
-     )
+     axes = FALSE, xlab = NA, ylab = NA,
+     main = "Mariana Trench", cex.main = 7
+)
 # Place point at Challenger Deep
-points(142.591667, 11.373333, col = "#faec2a", cex = 0.5, pch = 15)
-text(139.7, 11.85, "Challenger Deep", col = "#faec2a", cex = 0.75)
+points(142.591667, 11.373333, col = "#faec2a", cex = 0.8, pch = 15)
+text(139.8, 11.85, "Challenger Deep", col = "#faec2a", cex = 1.25)
 # Add scale
 scaleBathy(bathy, deg = 2, x = "bottomright", inset = 5, family = "Outfit",
-           cex = 0.65)
+           cex = 1)
 mtext("The Mariana Trench is the deepest part of the world's oceans,
 reaching a maximum known depth of about 10,994 meters
-in the Challenger Deep.", side = 1, line = 2, cex = 0.8, adj = 0.5)
+in the Challenger Deep.", side = 1, line = 4, cex = 0.67, adj = 0.5)
 mtext("Source: NOAA National Centers for Environmental Information. 2022.
-      Visualization: Ansgar Wolsing", side = 1, line = 3.5, cex = 0.6)
+      Visualization: Ansgar Wolsing", side = 1, line = 6, cex = 0.3)
 dev.off()
