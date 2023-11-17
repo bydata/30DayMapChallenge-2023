@@ -6,46 +6,41 @@ library(osmdata)
 library(ggmap)
 library(here)
 
-bbox <- c(xmin = 11.7, ymin = 53.0, xmax = 33.7, ymax = 61.0)
 
+# Retrieve the Nord Stream relation from OSM
 osm_query <- opq(bbox = "Nord Stream") %>%
   add_osm_feature(key = "name", value = "Nord Stream") %>%
   osmdata_sf()
 st_bbox(osm_query$osm_multilines)
 
 
-ggplot(osm_query$osm_multilines) +
-  geom_sf()
+# Retrieve basemap from Stadia Maps --------------------------------------------
 
-
-ggplot(osm_query$osm_lines) +
-  geom_sf(
-    aes(color = name)
-  ) +
-  facet_wrap(vars(name))
-
-# Basemap
+#' To retrieve Stadia Maps tile, you have to sign up for a free account
+#' at https://stadiamaps.com/ and create an API key
+#' Set the API key as an option: options("stadiamaps-key" = "YOUR_API_KEY")
+#' and then access the key with getOption()
 register_stadiamaps(getOption("stadiamaps-key"))
 stadiamaps_key()
 has_stadiamaps_key()
 
-names(bbox) <- c("left", "bottom", "right", "top")
-
+# Retrieve tiles and store them
+bbox <- c(left = 11.7, bottom = 53.0, right = 33.7, top = 61.0)
 maptype <- "alidade_smooth_dark"
 basemap <- get_stadiamap(bbox = bbox, maptype = maptype,  zoom = 6)
-write_rds(basemap,
-          here("output",
-               sprintf("stadia-stamenmaps-outdoors-%s-%s.rds",
+write_rds(
+  basemap,
+  here("output", sprintf("stadia-stamenmaps-outdoors-%s-%s.rds",
                        paste(bbox, collapse = "-"), maptype)),
-          compress = "gz")
+  compress = "gz")
 
 
+# Find start and end coordinates for both pipelines
 nordstream2_start_end <- osm_query$osm_lines %>%
   filter(name == "Nord Stream 2") %>%
   st_coordinates() %>%
   as.data.frame() %>%
   slice(1, nrow(.))
-
 nordstream1_start_end <- osm_query$osm_lines %>%
   filter(name != "Nord Stream 2") %>%
   st_union() %>%
@@ -53,6 +48,10 @@ nordstream1_start_end <- osm_query$osm_lines %>%
   as.data.frame() %>%
   slice_max(order_by = X, n = 1, with_ties = FALSE)
 
+
+# Map --------------------------------------------------------------------------
+
+# Labels
 annotations <- data.frame(
   x = c(19.0, 17),
   xend = c(19.75, 15.7),
