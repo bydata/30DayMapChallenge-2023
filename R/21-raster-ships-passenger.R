@@ -84,4 +84,4 @@ p <- ships_cropped_df %>%
     legend.key.height = unit(2.5, "mm"),
     plot.margin = margin(t = 2, b = 1, l = 2, r = 2)
   )
-ggsave(here("plots", "21-raster-ships.png"), width = 6, height = 4.5, dpi = 500)
+ggsave(here("plots", "21-raster-ships-passenger.png"), width = 6, height = 4.5, dpi = 500)
