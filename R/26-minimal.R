@@ -158,7 +158,7 @@ no_buli_cities_geocoded %>%
   coord_sf(xlim = c(4031952, 4671975 + 4.5e5)) +
   guides(fill = "none", color = "none") +
   labs(
-    title = "Least successful cities in German professional football",
+    title = "Least successful cities in German association football",
     subtitle = "Largest cities by population in Germany that never had a football club
     <br>in Bundesliga (since 1963) and 2nd Bundesliga (since 1974)",
     caption = "Source: Wikipedia, Statistisches Bundesamt (2022), DFB.
