@@ -95,6 +95,7 @@ no_buli_cities_geocoded <- no_buli_cities_geocoded %>%
 table_bottom_y <- 2.70e6
 table_left_x <- 4.79e6
 table_line_offset <- 3.5e4
+table_lines_y <- table_bottom_y +  (0:16 + 0.5) * table_line_offset
 
 no_buli_cities_geocoded %>%
   arrange(-rank) %>%
@@ -113,6 +114,12 @@ no_buli_cities_geocoded %>%
     color = "white", family = "Chivo", size = 2.75
   ) +
   # Legend with cities
+  annotate(
+    "segment",
+    x = table_left_x + 2e4, xend = table_left_x + 3.25e5,
+    y = table_lines_y, yend = table_lines_y,
+    linetype = "dashed", linewidth = 0.1
+  ) +
   geom_point(
     aes(
       x = table_left_x,
@@ -140,7 +147,7 @@ no_buli_cities_geocoded %>%
   ) +
   geom_richtext(
     aes(
-      x = table_left_x + 0.31e6,
+      x = table_left_x + 0.33e6,
       y = table_bottom_y + (18 - rank_league) * table_line_offset,
       label = scales::number(population, big.mark = ".", decimal.mark = ",")
     ),
@@ -151,7 +158,7 @@ no_buli_cities_geocoded %>%
   coord_sf(xlim = c(4031952, 4671975 + 4.5e5)) +
   guides(fill = "none", color = "none") +
   labs(
-    title = "Least successful German cities in association football",
+    title = "Least successful cities in German professional football",
     subtitle = "Largest cities by population in Germany that never had a football club
     <br>in Bundesliga (since 1963) and 2nd Bundesliga (since 1974)",
     caption = "Source: Wikipedia, Statistisches Bundesamt (2022), DFB.
@@ -166,4 +173,4 @@ no_buli_cities_geocoded %>%
     plot.caption = element_markdown(hjust = 1),
     plot.margin = margin(rep(6, 4))
   )
-ggsave(here("plots", "26-minimal.png"), width = 5, height = 5, scale = 1.5)
+ggsave(here("plots", "26-minimal.png"), width = 5, height = 4.5, scale = 1.5)
