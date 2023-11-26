@@ -81,8 +81,20 @@ st_crs(no_buli_cities_geocoded) <- "EPSG:4326"
 no_buli_cities_geocoded <- st_transform(no_buli_cities_geocoded, crs = crs)
 write_rds(no_buli_cities_geocoded, here("output", "no_buli_cities_geocoded.rds"))
 
-table_bottom_y <- 2.60e6
-table_line_offset <- 2.6e4
+# Rename Esslingen and Ludwigshafen
+no_buli_cities_geocoded <- no_buli_cities_geocoded %>%
+  mutate(name = case_match(
+    name,
+    "Ludwigshafen am Rhein" ~ "Ludwigshafen",
+    "Esslingen am Neckar" ~ "Esslingen",
+    .default = name
+  ))
+
+# table_bottom_y <- 2.60e6
+# table_left_x <- 4.66e6
+table_bottom_y <- 2.70e6
+table_left_x <- 4.79e6
+table_line_offset <- 3.5e4
 
 no_buli_cities_geocoded %>%
   arrange(-rank) %>%
@@ -103,7 +115,7 @@ no_buli_cities_geocoded %>%
   # Legend with cities
   geom_point(
     aes(
-      x = 4.66e6,
+      x = table_left_x,
       y = table_bottom_y + (18 - rank_league) * table_line_offset,
       color = rank_league == 1
     ),
@@ -111,32 +123,32 @@ no_buli_cities_geocoded %>%
   ) +
   geom_text(
     aes(
-      x = 4.66e6,
+      x = table_left_x,
       y = table_bottom_y + (18 - rank_league) * table_line_offset,
       label = rank_league
     ),
-    family = "Chivo", size = 2, color = "white", vjust = 0.55
+    family = "Chivo", size = 2.25, color = "white", vjust = 0.55
   ) +
   geom_richtext(
     aes(
-      x = 4.67e6,
+      x = table_left_x + 0.01e6,
       y = table_bottom_y + (18 - rank_league) * table_line_offset,
       label = paste(name)
     ),
-    family = "Source Sans Pro", size = 3.25, hjust = 0, vjust = 0.55,
+    family = "Source Sans Pro", size = 3.5, hjust = 0, vjust = 0.55,
     fill = NA, label.size = 0
   ) +
   geom_richtext(
     aes(
-      x = 4.97e6,
+      x = table_left_x + 0.31e6,
       y = table_bottom_y + (18 - rank_league) * table_line_offset,
       label = scales::number(population, big.mark = ".", decimal.mark = ",")
     ),
-    family = "Source Sans Pro", size = 3.25, hjust = 1, vjust = 0.5,
+    family = "Source Sans Pro", size = 3.5, hjust = 1, vjust = 0.5,
     fill = NA, label.size = 0
   ) +
   scale_fill_manual(values = c("grey40", "grey8"), aesthetics = c("color", "fill")) +
-  coord_sf(xlim = c(4031952, 4671975 + 3e5)) +
+  coord_sf(xlim = c(4031952, 4671975 + 4.5e5)) +
   guides(fill = "none", color = "none") +
   labs(
     title = "Least successful German cities in association football",
@@ -154,4 +166,4 @@ no_buli_cities_geocoded %>%
     plot.caption = element_markdown(hjust = 1),
     plot.margin = margin(rep(6, 4))
   )
-ggsave(here("plots", "26-minimal.png"), width = 4, height = 4.5, scale = 1.8)
+ggsave(here("plots", "26-minimal.png"), width = 5, height = 5, scale = 1.5)
