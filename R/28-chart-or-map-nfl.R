@@ -83,7 +83,7 @@ schedule_long <- schedule_mat %>%
 
 schedule_long %>%
   mutate(home_team = ifelse(home_away == "home", team_name, opponent_name)) %>%
-  inner_join(stadiums_updated, by = join_by(home_team == team)) %>% View()
+  inner_join(stadiums_updated, by = join_by(home_team == team))
 
 
 
@@ -186,6 +186,9 @@ franchise_total_distances <- matchday_distances %>%
   st_transform(crs = "EPSG:3857")
 
 
+plot_caption <- "**Sources:** NFL.com (schedule), github.com/rajinwonderland,
+    own research (stadiums).<br>**Visualization:** Ansgar Wolsing"
+
 # Create polygons for Dorling cartogram
 dorling <- cartogram::cartogram_dorling(franchise_total_distances,
                                         weight = "total_distance", k = 8)
@@ -223,10 +226,10 @@ layer_data(p_base, 1) %>%
   coord_cartesian(clip = "off") +
   guides(size = "none") +
   labs(
-    title = "NFL Travel Schedule",
+    title = "Travelling NFL Franchises",
     subtitle = "The size of the circles shows the total distance travelled.
     Franchises which played in Europe are highlighted with thicker line width",
-    caption = "Source: . Visualization: Ansgar Wolsing"
+    caption = plot_caption
   ) +
   theme_void(base_family = "Source Sans Pro") +
   theme(
@@ -238,32 +241,14 @@ layer_data(p_base, 1) %>%
     plot.subtitle = element_textbox(
       hjust = 0, halign = 0, width = 0.95, lineheight = 1.2,
       margin = margin(t = 4, b = 12)),
-    plot.caption = element_markdown(hjust = 0, margin = margin(t = 12)),
+    plot.caption = element_markdown(
+      hjust = 0, margin = margin(t = 18), lineheight = 1.2),
     plot.margin = margin(t = 4, b = 4, l = 30, r = 30)
   )
-ggsave(here("plots", "28-chart-or-map-nfl.png"), width = 5.5, height = 4.5, scale = 1.4)
+ggsave(here("plots", "28-chart-or-map-nfl-dorling.png"), width = 5.5, height = 4.5, scale = 1.4)
 
 
-# p_barchart <- dorling %>%
-#   st_drop_geometry() %>%
-#   mutate(
-#     logo_label = str_replace_all(team_name, " ", "_"),
-#     logo_label = sprintf("<img src='input/nfl-logos/%s.svg.png' width=%f>",
-#                          logo_label, 12),
-#     logo_label = fct_reorder(logo_label, total_distance),
-#     team_name = fct_reorder(team_name, total_distance)
-#   ) %>%
-#   ggplot(aes(logo_label, total_distance)) +
-#   geom_col() +
-#   scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
-#   coord_flip() +
-#   theme_minimal() +
-#   theme(
-#     axis.text.y.left = element_markdown()
-#   )
-# ggsave(here("plots", "28-chart-or-map-nfl-barchart.png"), width = 5, height = 4, scale = 1.5)
-
-
+# Lollipop chart with travel distances
 p_lollipop <- dorling %>%
   st_drop_geometry() %>%
   mutate(
@@ -291,11 +276,13 @@ p_lollipop <- dorling %>%
   ) +
   scale_y_continuous(
     expand = expansion(mult = c(0, 0.1)), position = "right",
+    minor_breaks = seq(0, 50000, 5000),
     labels = function(x) ifelse(x == max(x), paste(x, "km"), as.character(x))) +
   coord_flip() +
   labs(
-    title = "",
+    title = "Travelling NFL Franchises",
     subtitle = "Total distance travelled (km)",
+    caption = plot_caption,
     y = NULL
   ) +
   theme_minimal(base_family = "Source Sans Pro") +
@@ -303,6 +290,75 @@ p_lollipop <- dorling %>%
     plot.background = element_rect(color = "grey92", fill = "grey92"),
     axis.title.y = element_blank(),
     axis.text.y.left = element_blank(),
-    axis.ticks.x.top = element_line(linewidth = 0.2)
+    axis.ticks.x.top = element_line(linewidth = 0.2),
+    plot.title = element_text(
+      hjust = 0, size = 24, family = "Source Sans Pro", face = "bold",
+      color = "black"),
+    plot.subtitle = element_textbox(
+      hjust = 0, halign = 0, width = 0.95, lineheight = 1.2,
+      margin = margin(t = 4, b = 8)),
+    plot.caption = element_markdown(
+      hjust = 0, margin = margin(t = 12), lineheight = 1.2)
   )
-ggsave(here("plots", "28-chart-or-map-nfl-lollipop.png"), width = 4, height = 5, scale = 1.5)
+ggsave(here("plots", "28-chart-or-map-nfl-lollipop.png"), width = 2, height = 3, scale = 2.75)
+
+# Lollipop chart with travel distances - split
+p_lollipop_split <- dorling %>%
+  st_drop_geometry() %>%
+  mutate(
+    logo_label = str_replace_all(team_name, " ", "_"),
+    logo_label = sprintf("<img src='input/nfl-logos/%s.svg.png' width=%f>",
+                         logo_label, 18),
+    logo_label = fct_reorder(logo_label, total_distance),
+    team_name = fct_reorder(team_name, total_distance),
+    rank = rank(-total_distance),
+    rank_grp = ifelse(rank <= n() / 2, "1", "2")
+  ) %>%
+  ggplot(aes(team_name, total_distance)) +
+  geom_segment(
+    aes(xend = team_name, y = 0, yend = total_distance)
+  ) +
+  geom_label(
+    aes(y = 0, label = team_name),
+    hjust = 0, vjust = 0, fill = alpha("grey92", 0.6), label.size = 0,
+    family = "Source Sans Pro", size = 2.75
+  ) +
+  geom_point(
+    size = 5, color = "grey92"
+  ) +
+  geom_richtext(
+    aes(label = logo_label),
+    fill = NA, label.size = 0
+  ) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0, 0.1)), position = "right",
+    minor_breaks = seq(0, 50000, 5000),
+    labels = function(x) ifelse(x == max(x), paste(x, "km"), as.character(x))) +
+  coord_flip() +
+  facet_wrap(vars(rank_grp), scales = "free_y") +
+  labs(
+    title = "Travelling NFL Franchises",
+    subtitle = "Total distance travelled (km)",
+    caption = plot_caption,
+    y = NULL
+  ) +
+  theme_minimal(base_family = "Source Sans Pro") +
+  theme(
+    plot.background = element_rect(color = "grey92", fill = "grey92"),
+    axis.title.y = element_blank(),
+    axis.text.y.left = element_blank(),
+    axis.ticks.x.top = element_line(linewidth = 0.2),
+    plot.title = element_text(
+      hjust = 0, size = 24, family = "Source Sans Pro", face = "bold",
+      color = "black"),
+    plot.subtitle = element_textbox(
+      hjust = 0, halign = 0, width = 0.95, lineheight = 1.2,
+      margin = margin(t = 4, b = 8)),
+    plot.caption = element_markdown(
+      hjust = 0, margin = margin(t = 12), lineheight = 1.2),
+    strip.text = element_blank(),
+    panel.spacing.x = unit(1.5, "cm"),
+    plot.margin = margin(t = 4, l = 10, b = 4, r = 10)
+  )
+ggsave(here("plots", "28-chart-or-map-nfl-lollipop-split.png"),
+       width = 3, height = 3, scale = 2.25)
