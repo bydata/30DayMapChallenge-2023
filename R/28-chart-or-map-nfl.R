@@ -2,8 +2,6 @@ library(tidyverse)
 library(sf)
 library(here)
 library(ggtext)
-# devtools::install_github("martinjhnhadley/statesRcontiguous")
-library(statesRcontiguous)
 
 
 schedule_mat <- read_tsv(here("data", "nfl-schedule-2023.tsv"))
@@ -227,7 +225,8 @@ layer_data(p_base, 1) %>%
   guides(size = "none") +
   labs(
     title = "Travelling NFL Franchises",
-    subtitle = "The size of the circles shows the total distance travelled.
+    subtitle = "The size of the circles shows the total distance travelled in the
+    2023 regular season.
     Franchises which played in Europe are highlighted with thicker line width",
     caption = plot_caption
   ) +
@@ -260,12 +259,13 @@ p_lollipop <- dorling %>%
   ) %>%
   ggplot(aes(team_name, total_distance)) +
   geom_segment(
-    aes(xend = team_name, y = 0, yend = total_distance)
+    aes(xend = team_name, y = 0, yend = total_distance),
+    color = "grey30", linewidth = 0.3
   ) +
   geom_label(
     aes(y = 0, label = team_name),
-    hjust = 0, vjust = 0, fill = alpha("grey92", 0.6), label.size = 0,
-    family = "Source Sans Pro", size = 2.75
+    hjust = 0, vjust = -0.5, fill = alpha("grey92", 0.6), label.size = 0,
+    family = "Source Sans Pro", size = 2.75, label.padding = unit(0, "mm")
   ) +
   geom_point(
     size = 5, color = "grey92"
@@ -281,7 +281,7 @@ p_lollipop <- dorling %>%
   coord_flip() +
   labs(
     title = "Travelling NFL Franchises",
-    subtitle = "Total distance travelled (km)",
+    subtitle = "Total distance travelled (km) during the 2023 regular season",
     caption = plot_caption,
     y = NULL
   ) +
@@ -316,12 +316,13 @@ p_lollipop_split <- dorling %>%
   ) %>%
   ggplot(aes(team_name, total_distance)) +
   geom_segment(
-    aes(xend = team_name, y = 0, yend = total_distance)
+    aes(xend = team_name, y = 0, yend = total_distance),
+    color = "grey30", linewidth = 0.3
   ) +
   geom_label(
     aes(y = 0, label = team_name),
-    hjust = 0, vjust = 0, fill = alpha("grey92", 0.6), label.size = 0,
-    family = "Source Sans Pro", size = 2.75
+    hjust = 0, vjust = -0.5, fill = alpha("grey92", 0.6), label.size = 0,
+    family = "Source Sans Pro", size = 2.75, label.padding = unit(0, "mm")
   ) +
   geom_point(
     size = 5, color = "grey92"
@@ -338,7 +339,7 @@ p_lollipop_split <- dorling %>%
   facet_wrap(vars(rank_grp), scales = "free_y") +
   labs(
     title = "Travelling NFL Franchises",
-    subtitle = "Total distance travelled (km)",
+    subtitle = "Total distance travelled (km) during the 2023 regular season",
     caption = plot_caption,
     y = NULL
   ) +
