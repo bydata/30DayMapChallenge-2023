@@ -4,7 +4,7 @@ My contributions to the #30DayMapChallenge 2023
 
 ### 01 Points
 
-[![](plots/01-points-2.png){width="300"}](plots/01-points-2.png)
+<img src="plots/01-points-2.png" width="300px"/>
 
 ### 02 Lines
 
