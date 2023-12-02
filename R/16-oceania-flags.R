@@ -7,6 +7,7 @@ library(ggflags)
 oceania <- giscoR::gisco_get_countries(
   resolution = "20", region = "Oceania", epsg = "3857"
 )
+oceania <- st_transform(oceania, crs = "+proj=moll")
 glimpse(oceania)
 
 
@@ -68,7 +69,7 @@ layer_data(p, 1) %>%
   guides(size = "none") +
   labs(
     title = "Oceania",
-    subtitle = "The size of the flags indicates the population (2021)",
+    subtitle = "The size of the flags indicates the population of the countries (2021)",
     caption = "Source: GISCO, Worldbank. Visualization: Ansgar Wolsing"
   ) +
   theme_void(base_family = "Source Sans Pro Light") +
@@ -79,6 +80,6 @@ layer_data(p, 1) %>%
       hjust = 0.5, size = 36, family = "Playfair Display", face = "italic",
       color = "grey99"),
     plot.subtitle = element_text(hjust = 0.5, margin = margin(t = 12, b = 40)),
-    plot.margin = margin(t = 4, b = 4, l = 40, r = 40)
+    plot.margin = margin(t = 4, b = 20, l = 60, r = 20)
   )
 ggsave(file.path("plots", "16-oceania-dorling-pop.png"), width = 9, height = 7)
