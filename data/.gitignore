@@ -1,0 +1,15 @@
+*.csv
+*.tsv
+*.txt
+*.geojson
+*.zip
+*.gz
+*.rds
+*.xlsx
+*.gpkg
+*.pdf
+ShipDensity_*
+geonames_de
+dwd-stations
+EEA Copernicus
+vg5000_*
