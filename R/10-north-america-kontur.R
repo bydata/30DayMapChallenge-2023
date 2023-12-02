@@ -4,6 +4,12 @@ library(ggtext)
 library(patchwork)
 library(here)
 
+
+#' Projection: Lambert Conformal Conic
+#' https://proj.org/en/9.3/operations/projections/lcc.html
+crs <- "+proj=lcc +lon_0=-90 +lat_1=33 +lat_2=45"
+
+
 # KONTUR Datasets (2023-11-01)
 #' Canada: https://data.humdata.org/dataset/kontur-population-canada
 #' US: https://data.humdata.org/dataset/kontur-population-united-states-of-america
@@ -16,6 +22,9 @@ st_bbox(kontur)
 
 # Country shape
 shp <- giscoR::gisco_get_countries(country = "Canada", epsg = "3857")
+
+ggplot(shp) + geom_sf()
+ggplot(shp) + geom_sf() + coord_sf(crs = crs)
 
 
 # Custom theme
@@ -48,7 +57,7 @@ p_base <- ggplot() +
   scale_fill_viridis_c(breaks = c(10, 100, 1000, 5000, 20000),
                        labels = scales::number_format(), direction = 1,
                        trans = "pseudo_log", option = "plasma") +
-  coord_sf(xlim = c(-16200000, -5500000)) +
+  coord_sf(crs = crs) +
   labs(
     title = "Canada Population Density",
     subtitle = "400m hexagon population grid. Values represent number of people
@@ -71,7 +80,7 @@ coords_edmonton <- st_geometry(st_point(c(-113.8, 53.5)))
 cities_df <- data.frame(geometry = c(coords_vancouver, coords_toronto, coords_montreal,
                                   coords_calgary)) %>%
   st_as_sf(crs = "EPSG:4326") %>%
-  st_transform(crs = st_crs(shp))
+  st_transform(crs = crs)
 
 # arrows_df <- data.frame(
 #   # x = c(),
@@ -82,8 +91,8 @@ cities_df <- data.frame(geometry = c(coords_vancouver, coords_toronto, coords_mo
 
 p_base +
   geom_sf(
-    data = cities_df)
-
+    data = cities_df) +
+  coord_sf(crs = crs)
 
 
 # Add population density data to the map
@@ -91,7 +100,8 @@ p_density <- p_base +
   geom_sf(
     data = kontur,
     aes(fill = population),
-    linewidth = 1e-4, color = "white")
+    linewidth = 1e-4, color = "white") +
+  coord_sf(crs = crs)
 
 
 # Create insets / magnifying glass -----------------------
@@ -113,6 +123,7 @@ create_magnifying_inset <- function(coords, name, dist = 60000) {
     scale_fill_viridis_c(breaks = c(10, 100, 1000, 5000, 20000),
                          labels = scales::number_format(), direction = 1,
                          trans = "pseudo_log", option = "plasma") +
+    coord_sf(crs = crs) +
     guides(fill = "none") +
     labs(title = name) +
     theme(
@@ -133,13 +144,13 @@ p_inset_calgary <- create_magnifying_inset(coords_calgary, "Calgary")
 
 # Add the insets on the map
 p_combined <- p_density +
-  inset_element(p_inset_vancouver, left = 0, bottom = 0, right = 0.20,
-                top = 0.20, align_to = "full") +
+  inset_element(p_inset_vancouver, left = 0, bottom = 0.05, right = 0.20,
+                top = 0.25, align_to = "full") +
   inset_element(p_inset_montreal, left = 0.75, bottom = 0.425, right = 0.95,
                 top = 0.625, align_to = "full") +
-  inset_element(p_inset_toronto, left = 0.75, bottom = 0.60, right = 0.95,
-                top = 0.80, align_to = "full") +
-  inset_element(p_inset_calgary, left = 0.34, bottom = 0.22, right = 0.54,
-                top = 0.42, align_to = "full")
-ggsave(here("plots", "10-north-america-ca-pop-density-with-inset.png"), dpi = 400,
+  inset_element(p_inset_toronto, left = 0.75, bottom = 0.65, right = 0.95,
+                top = 0.85, align_to = "full") +
+  inset_element(p_inset_calgary, left = 0.26, bottom = 0.35, right = 0.46,
+                top = 0.55, align_to = "full")
+ggsave(here("plots", "10-north-america-ca-pop-density-with-inset-2.png"), dpi = 400,
        width = 5, height = 5, scale = 2)
